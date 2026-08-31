@@ -23,7 +23,7 @@ export default function ResultsPage({ searchParams }: { searchParams: Promise<Re
   const stats = [
     { label: t("totalSignals"), value: "908", icon: "📡" },
     { label: t("winRateLabel"), value: "84.9%", icon: "🎯" },
-    { label: t("totalProfit"), value: "+79.6%", icon: "📈" },
+    { label: t("totalProfitResults"), value: "+79.6%", icon: "📈" },
     { label: t("avgMonthly"), value: "+13.3%", icon: "💰" },
   ]
 
