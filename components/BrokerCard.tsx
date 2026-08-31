@@ -1,4 +1,11 @@
-export function BrokerCard({ name, minDeposit, leverage, url }) {
+interface BrokerCardProps {
+  name: string
+  minDeposit: string | number
+  leverage: string
+  url: string
+}
+
+export function BrokerCard({ name, minDeposit, leverage, url }: BrokerCardProps) {
   return (
     <div className="bg-white rounded-xl p-6 shadow hover:transform hover:translate-y-2 hover:transition-all duration-300 border border-gray-100">
       <h3 className="text-xl font-bold text-gray-900 mb-2">{name}</h3>

@@ -1,38 +1,41 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTheme } from "@/components/ThemeProvider"
+import { t, locales, type Locale } from "@/lib/translations"
 
-const navigationLinks = [
-  { id: 1, href: "/", label: "Home" },
-  { id: 2, href: "/results", label: "Results" },
-  { id: 3, href: "/news-analysis", label: "News Analysis" },
-  { id: 4, href: "/faq", label: "FAQ" },
-  { id: 5, href: "/brokers", label: "Brokers" },
-  { id: 6, href: "/education", label: "Education" },
-  { id: 7, href: "https://t.me/tokmatacademy", label: "Contact", external: true },
-]
-
-const supportedLocales = ["en", "en-GB", "fr", "ms", "ar"]
-const localeLabels: Record<string, string> = {
-  "en": "EN",
-  "en-GB": "EN-GB",
-  "fr": "FR",
-  "ms": "MS",
-  "ar": "عربي",
-}
-const localeFull: Record<string, string> = {
-  "en": "English",
-  "en-GB": "English (UK)",
-  "fr": "Français",
-  "ms": "Melayu",
-  "ar": "العربية",
+function getLocaleFromURL(): Locale {
+  if (typeof window === "undefined") return "en"
+  const params = new URLSearchParams(window.location.search)
+  const loc = params.get("locale") || "en"
+  return (locales.find(l => l.code === loc) ? loc : "en") as Locale
 }
 
-export function Header({ locale }: { locale: string }) {
-  const direction = locale === "ar" ? "rtl" : "ltr"
+function getNavLinks(locale: Locale) {
+  return [
+    { id: 1, href: "/", label: t(locale, "navHome") },
+    { id: 2, href: "/results", label: t(locale, "navResults") },
+    { id: 3, href: "/news-analysis", label: t(locale, "navNews") },
+    { id: 4, href: "/faq", label: t(locale, "navFaq") },
+    { id: 5, href: "/brokers", label: t(locale, "navBrokers") },
+    { id: 6, href: "/education", label: t(locale, "navEducation") },
+    { id: 7, href: "https://t.me/tokmatacademy", label: t(locale, "navContact"), external: true },
+  ]
+}
+
+export function Header({ locale: initialLocale }: { locale: string }) {
+  const { theme, toggleTheme } = useTheme()
+  const [currentLocale, setCurrentLocale] = useState<Locale>(initialLocale as Locale)
+  const direction = currentLocale === "ar" ? "rtl" : "ltr"
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
+  const navigationLinks = getNavLinks(currentLocale)
+  const isDark = theme === "dark"
+
+  useEffect(() => {
+    setCurrentLocale(getLocaleFromURL())
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -40,7 +43,7 @@ export function Header({ locale }: { locale: string }) {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const updateLocaleInURL = (lang: string) => {
+  const updateLocaleInURL = (lang: Locale) => {
     const url = new URL(window.location.href)
     url.searchParams.set("locale", lang)
     window.history.pushState({}, "", url.pathname + url.search)
@@ -50,9 +53,11 @@ export function Header({ locale }: { locale: string }) {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${
         scrolled
-          ? "bg-white/90 backdrop-blur-xl shadow-elevated border-b border-gray-100"
+          ? isDark
+            ? "bg-dark-900/95 backdrop-blur-xl shadow-elevated border-b border-dark-700"
+            : "bg-white shadow-elevated border-b border-gray-100"
           : "bg-transparent"
       }`}
       dir={direction}
@@ -67,8 +72,8 @@ export function Header({ locale }: { locale: string }) {
               </svg>
             </div>
             <div className="flex flex-col leading-none">
-              <span className="text-xl font-extrabold text-gray-900 tracking-tight">
-                Tokmat<span className="text-blue-600">Academy</span>
+              <span className={`text-xl font-extrabold tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>
+                Tokmat <span className="text-blue-600">Academy</span>
               </span>
               <span className="text-[10px] text-gray-400 font-medium tracking-wider uppercase hidden sm:block">
                 Forex Education
@@ -97,26 +102,40 @@ export function Header({ locale }: { locale: string }) {
           </nav>
 
           {/* Right Side */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-lg transition-colors ${isDark ? "bg-dark-700 hover:bg-dark-600" : "bg-gray-100 hover:bg-gray-200"}`}
+              title={isDark ? "Light mode" : "Dark mode"}
+            >
+              {isDark ? (
+                <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                </svg>
+              )}
+            </button>
+
             {/* Live Indicator */}
-            <div className="hidden md:flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-3 py-1.5">
+            <div className={`hidden md:flex items-center gap-2 ${isDark ? "bg-green-900/30 border-green-700" : "bg-green-50 border-green-200"} border rounded-full px-3 py-1.5`}>
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
-              <span className="text-xs font-semibold text-green-700">LIVE</span>
+              <span className={`text-xs font-semibold ${isDark ? "text-green-400" : "text-green-700"}`}>LIVE</span>
             </div>
 
             {/* Language Switcher */}
             <div className="relative">
               <button
                 onClick={() => setLangOpen(!langOpen)}
-                className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors"
+                className={`flex items-center gap-1.5 ${isDark ? "bg-dark-700 hover:bg-dark-600 text-gray-300" : "bg-gray-100 hover:bg-gray-200 text-gray-700"} rounded-lg px-2 sm:px-3 py-2 text-sm font-medium transition-colors`}
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                </svg>
-                <span>{localeLabels[locale] || "EN"}</span>
+                <span className="text-xs font-bold">{locales.find(l => l.code === currentLocale)?.flag}</span>
                 <svg className={`w-3 h-3 transition-transform ${langOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
@@ -125,17 +144,22 @@ export function Header({ locale }: { locale: string }) {
               {langOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setLangOpen(false)} />
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-elevated border border-gray-100 py-2 z-50 animate-fade-in">
-                    {supportedLocales.map((loc) => (
+                  <div className={`absolute right-0 mt-2 w-52 rounded-xl shadow-elevated border py-2 z-50 animate-fade-in ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"}`}>
+                    {locales.map((loc) => (
                       <button
-                        key={loc}
-                        onClick={() => updateLocaleInURL(loc)}
-                        className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-blue-50 transition-colors ${
-                          loc === locale ? "bg-blue-50 text-blue-700 font-semibold" : "text-gray-700"
+                        key={loc.code}
+                        onClick={() => updateLocaleInURL(loc.code)}
+                        className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between transition-colors ${
+                          loc.code === currentLocale
+                            ? isDark ? "bg-blue-900/30 text-blue-400 font-semibold" : "bg-blue-50 text-blue-700 font-semibold"
+                            : isDark ? "text-gray-300 hover:bg-dark-700" : "text-gray-700 hover:bg-gray-50"
                         }`}
                       >
-                        <span>{localeFull[loc]}</span>
-                        {loc === locale && (
+                        <span className="flex items-center gap-2">
+                          <span className="text-xs font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{loc.flag}</span>
+                          <span>{loc.label}</span>
+                        </span>
+                        {loc.code === currentLocale && (
                           <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
@@ -148,21 +172,21 @@ export function Header({ locale }: { locale: string }) {
             </div>
 
             {/* CTA Button */}
-            <a href="/register" className="hidden sm:inline-flex btn-primary !px-5 !py-2.5 !text-sm !rounded-lg">
-              Join Free
+            <a href="/register" className={`hidden sm:inline-flex !px-4 sm:!px-5 !py-2.5 !text-sm !rounded-lg font-semibold transition-all ${isDark ? "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20" : "btn-primary"}`}>
+              {t(currentLocale, "navJoinFree")}
             </a>
 
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className={`lg:hidden p-2 rounded-lg transition-colors ${isDark ? "hover:bg-dark-700" : "hover:bg-gray-100"}`}
             >
               {mobileOpen ? (
-                <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className={`w-6 h-6 ${isDark ? "text-gray-300" : "text-gray-700"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               ) : (
-                <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className={`w-6 h-6 ${isDark ? "text-gray-300" : "text-gray-700"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               )}
@@ -172,7 +196,7 @@ export function Header({ locale }: { locale: string }) {
 
         {/* Mobile Nav */}
         {mobileOpen && (
-          <div className="lg:hidden border-t border-gray-100 py-4 animate-fade-in">
+          <div className={`lg:hidden border-t py-4 animate-fade-in ${isDark ? "border-dark-700" : "border-gray-100"}`}>
             <div className="flex flex-col gap-1">
               {navigationLinks.map((link) => (
                 <a
@@ -180,14 +204,14 @@ export function Header({ locale }: { locale: string }) {
                   href={link.href}
                   target={link.external ? "_blank" : undefined}
                   onClick={() => setMobileOpen(false)}
-                  className="px-4 py-3 text-gray-700 font-medium rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  className={`px-4 py-3 font-medium rounded-lg transition-colors ${isDark ? "text-gray-300 hover:bg-blue-900/20 hover:text-blue-400" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"}`}
                 >
                   {link.label}
                 </a>
               ))}
-              <div className="border-t border-gray-100 mt-2 pt-2 px-4">
+              <div className={`border-t mt-2 pt-2 px-4 ${isDark ? "border-dark-700" : "border-gray-100"}`}>
                 <a href="/register" className="btn-primary w-full text-center !py-3 block">
-                  Join Free
+                  {t(currentLocale, "navJoinFree")}
                 </a>
               </div>
             </div>
