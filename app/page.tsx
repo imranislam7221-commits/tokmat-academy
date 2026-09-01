@@ -61,27 +61,27 @@ export default function Home() {
     script.type = "text/javascript"
     script.textContent = JSON.stringify({
       symbols: [
-        { proName: "FOREXCOM:GOLD", title: "Gold" },
-        { proName: "NASDAQ:TSLA", title: "Tesla" },
-        { proName: "NASDAQ:NVDA", title: "NVIDIA" },
-        { proName: "NASDAQ:AAPL", title: "Apple" },
-        { proName: "NASDAQ:GOOGL", title: "Google" },
+        { proName: "FOREXCOM:GOLD", title: "GOLD" },
+        { proName: "NASDAQ:TSLA", title: "TSLA" },
+        { proName: "NASDAQ:NVDA", title: "NVDA" },
+        { proName: "NASDAQ:AAPL", title: "AAPL" },
+        { proName: "NASDAQ:GOOGL", title: "GOOGL" },
         { proName: "FX:EURUSD", title: "EUR/USD" },
         { proName: "FX:GBPUSD", title: "GBP/USD" },
         { proName: "BINANCE:BTCUSDT", title: "BTC/USD" },
         { proName: "FX:USDJPY", title: "USD/JPY" },
-        { proName: "NASDAQ:AMZN", title: "Amazon" },
-        { proName: "NASDAQ:MSFT", title: "Microsoft" },
+        { proName: "NASDAQ:AMZN", title: "AMZN" },
+        { proName: "NASDAQ:MSFT", title: "MSFT" },
         { proName: "BINANCE:ETHUSDT", title: "ETH/USD" },
         { proName: "FX:USDCHF", title: "USD/CHF" },
         { proName: "FX:AUDUSD", title: "AUD/USD" },
       ],
-      showSymbolLogo: true,
+      showSymbolLogo: false,
       colorTheme: "dark",
-      isTransparent: false,
+      isTransparent: true,
       displayMode: "compact",
       width: "100%",
-      height: 56,
+      height: 46,
     })
 
     widgetDiv.appendChild(script)
@@ -198,8 +198,8 @@ export default function Home() {
       </section>
 
       {/* ===== Live Market Ticker (TradingView Real-Time) ===== */}
-      <section className="relative z-20 overflow-hidden bg-dark-950">
-        <div id="tradingview-ticker"></div>
+      <section className="relative z-20 overflow-hidden bg-dark-950" style={{ height: 56 }}>
+        <div id="tradingview-ticker" className="w-full h-full overflow-hidden"></div>
       </section>
 
       {/* ===== Pricing Plans Section ===== */}
