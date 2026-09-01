@@ -45,8 +45,6 @@ export default function Home() {
 
   // Live market data state
   const [signals, setSignals] = useState([
-    { pair: "EUR/USD", direction: "BUY", entry: "1.08500", tp: "1.09200", sl: "1.08100", profit: "+0.64%", status: "TP Hit", time: "10:30 AM" },
-    { pair: "GBP/JPY", direction: "SELL", entry: "188.500", tp: "187.800", sl: "189.100", profit: "+0.37%", status: "Running", time: "11:15 AM" },
     { pair: "XAU/USD", direction: "BUY", entry: "2345.00", tp: "2375.00", sl: "2330.00", profit: "+1.28%", status: "TP Hit", time: "09:45 AM" },
   ])
   const [marketData, setMarketData] = useState([
@@ -416,7 +414,7 @@ export default function Home() {
             <p className="text-gray-400 text-lg max-w-xl mx-auto">{t("liveSignalsDesc")}</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="flex justify-center max-w-5xl mx-auto">
             {signals.map((signal, i) => (
               <div key={i} className="trading-card">
                 <div className="flex items-center justify-between mb-4">
