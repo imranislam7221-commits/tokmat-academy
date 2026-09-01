@@ -397,63 +397,63 @@ export default function Home() {
       </section>
 
       {/* ===== Live Signal Preview ===== */}
-      <section className="py-10 px-4 bg-dark-950 relative overflow-hidden">
+      <section className="py-6 sm:py-10 px-3 sm:px-4 bg-dark-950 relative overflow-hidden">
         <div className="absolute inset-0 bg-grid opacity-30"></div>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-3xl"></div>
 
         <div className="relative max-w-4xl mx-auto">
-          <div className="text-center mb-5">
-            <div className="inline-flex items-center gap-2 bg-green-500/10 text-green-400 text-xs font-semibold px-4 py-1.5 rounded-full border border-green-500/20 mb-3">
-              <span className="relative flex h-2 w-2">
+          <div className="text-center mb-3 sm:mb-5">
+            <div className="inline-flex items-center gap-1.5 bg-green-500/10 text-green-400 text-[10px] sm:text-xs font-semibold px-3 py-1 rounded-full border border-green-500/20 mb-2">
+              <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
               </span>
               {t("liveSignalsBadge")}
             </div>
-            <h2 className="text-xl md:text-2xl font-extrabold text-white mb-1">{t("liveSignalsTitle")}</h2>
-            <p className="text-gray-400 text-xs max-w-sm mx-auto">{t("liveSignalsDesc")}</p>
+            <h2 className="text-base sm:text-xl md:text-2xl font-extrabold text-white mb-0.5">{t("liveSignalsTitle")}</h2>
+            <p className="text-gray-400 text-[10px] sm:text-xs max-w-xs mx-auto">{t("liveSignalsDesc")}</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 max-w-4xl mx-auto items-center">
             {signals.map((signal, i) => (
-              <div key={i} className={`w-full bg-white/5 backdrop-blur-xl border rounded-xl p-4 transition-all duration-500 ${signal.pair === "XAU/USD" ? "border-yellow-500/30 hover:shadow-yellow-500/10 hover:shadow-2xl hover:border-yellow-500/50 md:scale-105" : "border-white/10 hover:border-green-500/30 hover:shadow-green-500/10 hover:shadow-xl"}`}>
+              <div key={i} className={`w-full bg-white/5 backdrop-blur-xl border rounded-lg p-2.5 sm:p-4 transition-all duration-500 ${signal.pair === "XAU/USD" ? "border-yellow-500/30 hover:shadow-yellow-500/10 hover:shadow-2xl hover:border-yellow-500/50 md:scale-105" : "border-white/10 hover:border-green-500/30 hover:shadow-green-500/10 hover:shadow-xl"}`}>
                 {/* Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shadow-lg ${signal.pair === "XAU/USD" ? "bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-yellow-500/20" : "bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/20"}`}>
-                      <span className="text-sm">{signal.pair === "XAU/USD" ? "🥇" : "📊"}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg flex items-center justify-center shadow-lg ${signal.pair === "XAU/USD" ? "bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-yellow-500/20" : "bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/20"}`}>
+                      <span className="text-[10px] sm:text-sm">{signal.pair === "XAU/USD" ? "🥇" : "📊"}</span>
                     </div>
                     <div>
-                      <div className="text-white font-extrabold text-base">{signal.pair}</div>
-                      <div className="text-gray-500 text-[10px]">{signal.time}</div>
+                      <div className="text-white font-extrabold text-xs sm:text-base leading-tight">{signal.pair}</div>
+                      <div className="text-gray-500 text-[9px] sm:text-[10px]">{signal.time}</div>
                     </div>
                   </div>
-                  <span className={`signal-badge text-[10px] px-2 py-0.5 ${signal.direction === "BUY" ? "signal-buy" : "signal-sell"}`}>{signal.direction}</span>
+                  <span className={`signal-badge text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 ${signal.direction === "BUY" ? "signal-buy" : "signal-sell"}`}>{signal.direction}</span>
                 </div>
 
                 {/* Price Levels */}
-                <div className="space-y-1.5 mb-3">
-                  <div className="flex items-center justify-between bg-white/5 rounded px-2.5 py-1.5">
-                    <span className="text-gray-400 font-medium text-[11px]">{t("entry")}</span>
-                    <span className="text-white trading-price font-bold text-xs">{signal.entry}</span>
+                <div className="space-y-1 mb-2">
+                  <div className="flex items-center justify-between bg-white/5 rounded px-2 py-1">
+                    <span className="text-gray-400 font-medium text-[9px] sm:text-[10px]">{t("entry")}</span>
+                    <span className="text-white trading-price font-bold text-[10px] sm:text-xs">{signal.entry}</span>
                   </div>
-                  <div className="flex items-center justify-between bg-green-500/5 border border-green-500/10 rounded px-2.5 py-1.5">
-                    <span className="text-green-400 font-medium text-[11px]">{t("takeProfit")}</span>
-                    <span className="text-green-400 trading-price font-bold text-xs">{signal.tp}</span>
+                  <div className="flex items-center justify-between bg-green-500/5 border border-green-500/10 rounded px-2 py-1">
+                    <span className="text-green-400 font-medium text-[9px] sm:text-[10px]">{t("takeProfit")}</span>
+                    <span className="text-green-400 trading-price font-bold text-[10px] sm:text-xs">{signal.tp}</span>
                   </div>
-                  <div className="flex items-center justify-between bg-red-500/5 border border-red-500/10 rounded px-2.5 py-1.5">
-                    <span className="text-red-400 font-medium text-[11px]">{t("stopLoss")}</span>
-                    <span className="text-red-400 trading-price font-bold text-xs">{signal.sl}</span>
+                  <div className="flex items-center justify-between bg-red-500/5 border border-red-500/10 rounded px-2 py-1">
+                    <span className="text-red-400 font-medium text-[9px] sm:text-[10px]">{t("stopLoss")}</span>
+                    <span className="text-red-400 trading-price font-bold text-[10px] sm:text-xs">{signal.sl}</span>
                   </div>
                 </div>
 
                 {/* Footer */}
-                <div className="border-t border-white/10 pt-2 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-gray-500 text-[10px]">Profit:</span>
-                    <span className="text-green-400 font-bold text-xs trading-price">{signal.profit}</span>
+                <div className="border-t border-white/10 pt-1.5 flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-500 text-[9px]">Profit:</span>
+                    <span className="text-green-400 font-bold text-[10px] sm:text-xs trading-price">{signal.profit}</span>
                   </div>
-                  <span className={`signal-badge border text-[10px] px-2 py-0.5 ${signal.status === "TP Hit" ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-blue-500/20 text-blue-400 border-blue-500/30"}`}>{signal.status}</span>
+                  <span className={`signal-badge border text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 ${signal.status === "TP Hit" ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-blue-500/20 text-blue-400 border-blue-500/30"}`}>{signal.status}</span>
                 </div>
               </div>
             ))}
