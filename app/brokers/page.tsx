@@ -1,9 +1,17 @@
-import { BrokerCard } from "@/components/BrokerCard"
+"use client"
+
 import { use } from "react"
+import { BrokerCard } from "@/components/BrokerCard"
+import { useTheme } from "@/components/ThemeProvider"
+import { t as translate, type Locale } from "@/lib/translations"
 
 export default function BrokersPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const params = use(searchParams)
-  const locale = params?.locale || "en"
+  const locale = (params?.locale || "en") as Locale
+  const { theme } = useTheme()
+  const isDark = theme === "dark"
+  const t = (key: string) => translate(locale, key)
+
   const brokers = [
     { name: "Exness Global", minDeposit: "$10", leverage: "1:Unlimited", url: "https://exness.com" },
     { name: "XM Markets", minDeposit: "$5", leverage: "1:1000", url: "https://xm.com" },
@@ -12,14 +20,15 @@ export default function BrokersPage({ searchParams }: { searchParams: Promise<Re
   ]
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-12">
-      <nav className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">Trusted Brokers</h1>
+    <main className={`min-h-screen px-4 py-12 transition-colors duration-300 ${isDark ? "bg-dark-950" : "bg-gray-50"}`}>
+      <section className="bg-gradient-to-br from-dark-950 via-dark-900 to-blue-950 text-white py-14 px-4 -mx-4 -mt-12 mb-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <h1 className="text-3xl md:text-5xl font-extrabold mb-3">{t("brokers")}</h1>
+          <p className="text-gray-400 text-lg max-w-xl mx-auto">{t("brokerPartners")}</p>
         </div>
-      </nav>
+      </section>
 
-      <div className="p-4 max-w-7xl mx-auto grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 gap-6 md:grid-cols-2">
         {brokers.map((broker) => (
           <BrokerCard key={broker.name} {...broker} />
         ))}

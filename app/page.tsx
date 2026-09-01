@@ -311,8 +311,13 @@ export default function Home({ searchParams }: { searchParams: Promise<Record<st
             <div>
               <h4 className="text-white font-semibold mb-4">{t("footerPlatform")}</h4>
               <ul className="space-y-2.5 text-sm">
-                {["Signals", "Results", "Education", "News"].map((link) => (
-                  <li key={link}><a href={`/${link.toLowerCase()}`} className="hover:text-white transition-colors">{link}</a></li>
+                {[
+                  { href: "/signals", label: t("navSignals") },
+                  { href: "/results", label: t("navResults") },
+                  { href: "/education", label: t("navEducation") },
+                  { href: "/news-analysis", label: t("navNews") },
+                ].map((link) => (
+                  <li key={link.href}><a href={link.href} className="hover:text-white transition-colors">{link.label}</a></li>
                 ))}
               </ul>
             </div>
@@ -320,8 +325,13 @@ export default function Home({ searchParams }: { searchParams: Promise<Record<st
             <div>
               <h4 className="text-white font-semibold mb-4">{t("footerCompany")}</h4>
               <ul className="space-y-2.5 text-sm">
-                {["About Us", "FAQ", "Brokers", "Contact"].map((link) => (
-                  <li key={link}><a href={`/${link.toLowerCase().replace(" ", "-")}`} className="hover:text-white transition-colors">{link}</a></li>
+                {[
+                  { href: "/about-us", label: t("navAbout") },
+                  { href: "/faq", label: t("navFaq") },
+                  { href: "/brokers", label: t("navBrokers") },
+                  { href: "/contact", label: t("navContact") },
+                ].map((link) => (
+                  <li key={link.href}><a href={link.href} className="hover:text-white transition-colors">{link.label}</a></li>
                 ))}
               </ul>
             </div>

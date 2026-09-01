@@ -270,42 +270,6 @@ body {
   color: #e2e8f0;
 }
 
-.dark .bg-gray-50 { background: #0f172a; }
-.dark .bg-white { background: #1e293b; }
-.dark .text-gray-900 { color: #f1f5f9; }
-.dark .text-gray-700 { color: #cbd5e1; }
-.dark .text-gray-500 { color: #94a3b8; }
-.dark .text-gray-400 { color: #94a3b8; }
-.dark .text-gray-600 { color: #94a3b8; }
-.dark .border-gray-100 { border-color: #1e293b; }
-.dark .border-gray-200 { border-color: #334155; }
-.dark .hover\:bg-gray-100:hover { background: #1e293b; }
-.dark .hover\:bg-gray-50:hover { background: #1e293b; }
-.dark .bg-gray-100 { background: #1e293b; }
-.dark .bg-blue-50 { background: rgba(59,130,246,0.1); }
-.dark .bg-green-50 { background: rgba(34,197,94,0.1); }
-.dark .bg-red-50 { background: rgba(239,68,68,0.1); }
-.dark .bg-green-100 { background: rgba(34,197,94,0.15); }
-.dark .border-blue-200 { border-color: rgba(59,130,246,0.2); }
-.dark .border-green-200 { border-color: rgba(34,197,94,0.2); }
-
-/* Dark feature card */
-.dark .feature-card {
-  background: #1e293b;
-  border-color: #334155;
-}
-.dark .feature-card:hover {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-}
-
-/* Dark nav link */
-.dark .nav-link {
-  color: #94a3b8;
-}
-.dark .nav-link:hover {
-  color: #60a5fa;
-}
-
 /* Dark form inputs */
 .dark input[type='text'],
 .dark input[type='email'],

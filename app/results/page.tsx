@@ -28,8 +28,8 @@ export default function ResultsPage({ searchParams }: { searchParams: Promise<Re
   ]
 
   return (
-    <main className="min-h-screen bg-dark-950">
-      <section className="py-14 px-4 relative overflow-hidden">
+    <main className={`min-h-screen transition-colors duration-300 ${isDark ? "bg-dark-950" : "bg-gray-50"}`}>
+      <section className={`py-14 px-4 relative overflow-hidden ${isDark ? "" : "bg-gradient-to-br from-dark-950 via-dark-900 to-blue-950"}`}>
         <div className="absolute inset-0 bg-grid opacity-20"></div>
         <div className="relative max-w-7xl mx-auto text-center">
           <div className="inline-block bg-green-500/10 text-green-400 text-sm font-semibold px-4 py-1.5 rounded-full border border-green-500/20 mb-4">{t("verifiedResults")}</div>
@@ -38,41 +38,38 @@ export default function ResultsPage({ searchParams }: { searchParams: Promise<Re
         </div>
       </section>
 
-      <section className="max-w-5xl mx-auto px-4 pb-10">
+      <section className="max-w-5xl mx-auto px-4 pb-10 -mt-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((s, i) => (
-            <div key={i} className="trading-card text-center">
+            <div key={i} className={`rounded-2xl border text-center p-5 transition-all hover:shadow-lg ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100 shadow-sm"}`}>
               <div className="text-2xl mb-2">{s.icon}</div>
-              <div className="text-2xl font-extrabold text-white">{s.value}</div>
-              <div className="text-gray-400 text-sm">{s.label}</div>
+              <div className={`text-2xl font-extrabold ${isDark ? "text-white" : "text-gray-900"}`}>{s.value}</div>
+              <div className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>{s.label}</div>
             </div>
           ))}
         </div>
       </section>
 
       <section className="max-w-5xl mx-auto px-4 pb-16">
-        <div className="trading-card overflow-hidden">
+        <div className={`rounded-2xl border overflow-hidden ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100 shadow-sm"}`}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-dark-700/50">
-                  <th className="text-left text-gray-400 font-medium py-3 px-4">{t("monthLabel")}</th>
-                  <th className="text-center text-gray-400 font-medium py-3 px-4">{t("signalsLabel")}</th>
-                  <th className="text-center text-gray-400 font-medium py-3 px-4">{t("winsLabel")}</th>
-                  <th className="text-center text-gray-400 font-medium py-3 px-4">{t("lossesLabel")}</th>
-                  <th className="text-center text-gray-400 font-medium py-3 px-4">{t("winRateLabel")}</th>
-                  <th className="text-center text-gray-400 font-medium py-3 px-4">{t("profitLabel")}</th>
+                <tr className={isDark ? "bg-dark-700" : "bg-gray-50"}>
+                  {[t("monthLabel"), t("signalsLabel"), t("winsLabel"), t("lossesLabel"), t("winRateLabel"), t("profitLabel")].map((h) => (
+                    <th key={h} className={`text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider ${isDark ? "text-gray-400" : "text-gray-500"}`}>{h}</th>
+                  ))}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className={`divide-y ${isDark ? "divide-dark-700" : "divide-gray-100"}`}>
                 {months.map((m, i) => (
-                  <tr key={i} className="border-b border-dark-800/50 hover:bg-dark-800/30 transition-colors">
-                    <td className="text-white font-medium py-3 px-4">{m.month}</td>
-                    <td className="text-center text-gray-300 py-3 px-4">{m.signals}</td>
-                    <td className="text-center text-green-400 py-3 px-4">{m.wins}</td>
-                    <td className="text-center text-red-400 py-3 px-4">{m.losses}</td>
-                    <td className="text-center text-blue-400 font-medium py-3 px-4">{m.winRate}</td>
-                    <td className="text-center text-green-400 font-bold trading-price py-3 px-4">{m.profit}</td>
+                  <tr key={i} className={`transition-colors ${isDark ? "hover:bg-dark-700/50" : "hover:bg-gray-50"}`}>
+                    <td className={`text-center font-medium py-3 px-4 ${isDark ? "text-white" : "text-gray-900"}`}>{m.month}</td>
+                    <td className={`text-center py-3 px-4 ${isDark ? "text-gray-300" : "text-gray-600"}`}>{m.signals}</td>
+                    <td className="text-center text-green-500 py-3 px-4">{m.wins}</td>
+                    <td className="text-center text-red-500 py-3 px-4">{m.losses}</td>
+                    <td className="text-center text-blue-500 font-medium py-3 px-4">{m.winRate}</td>
+                    <td className="text-center text-green-500 font-bold trading-price py-3 px-4">{m.profit}</td>
                   </tr>
                 ))}
               </tbody>
