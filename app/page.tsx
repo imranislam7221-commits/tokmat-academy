@@ -126,7 +126,7 @@ export default function Home() {
       {/* ===== Stats Section (Animated Counters) ===== */}
       <section className="relative -mt-16 z-20 px-4">
         <div className="max-w-5xl mx-auto">
-          <div className={`rounded-2xl shadow-elevated border p-8 transition-colors ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"}`}>
+          <div className={`rounded-2xl shadow-elevated border backdrop-blur-xl p-8 transition-colors ${isDark ? "bg-white/5 border-white/10" : "bg-white/60 border-white/30"}`}>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {[
                 { end: 50000, suffix: "+", label: t("statsTraders"), color: "from-blue-500 to-blue-600", icon: "👥" },
@@ -155,7 +155,7 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {/* Free Plan */}
-            <div className={`rounded-2xl overflow-hidden border transition-all hover:shadow-xl ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-200"}`}>
+            <div className={`rounded-2xl overflow-hidden border backdrop-blur-xl transition-all hover:shadow-xl hover:scale-105 ${isDark ? "bg-white/5 border-white/10" : "bg-white/60 border-white/30"}`}>
               <div className="bg-red-600 text-white text-center py-4">
                 <h3 className="text-2xl font-extrabold">{t("planFree")}</h3>
               </div>
@@ -185,7 +185,7 @@ export default function Home() {
             </div>
 
             {/* Premium Plan */}
-            <div className={`rounded-2xl overflow-hidden border-2 border-blue-600 relative transition-all hover:shadow-xl ${isDark ? "bg-dark-800" : "bg-white"}`}>
+            <div className={`rounded-2xl overflow-hidden border-2 border-blue-500/50 relative backdrop-blur-xl transition-all hover:shadow-xl hover:shadow-blue-500/20 hover:scale-105 ${isDark ? "bg-blue-500/10" : "bg-blue-50/60"}`}>
               <span className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">{t("recommended")}</span>
               <div className="bg-red-600 text-white text-center py-4">
                 <h3 className="text-2xl font-extrabold">{t("planPremium")}</h3>
@@ -216,7 +216,7 @@ export default function Home() {
             </div>
 
             {/* Supreme Plan */}
-            <div className={`rounded-2xl overflow-hidden border transition-all hover:shadow-xl ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-200"}`}>
+            <div className={`rounded-2xl overflow-hidden border backdrop-blur-xl transition-all hover:shadow-xl hover:scale-105 ${isDark ? "bg-white/5 border-white/10" : "bg-white/60 border-white/30"}`}>
               <div className="bg-red-600 text-white text-center py-4">
                 <h3 className="text-2xl font-extrabold">{t("planSupreme")}</h3>
               </div>
@@ -251,7 +251,7 @@ export default function Home() {
       {/* ===== Limited Offer Countdown Banner ===== */}
       <section className="py-8 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className={`rounded-2xl overflow-hidden border ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-200"}`}>
+          <div className={`rounded-2xl overflow-hidden border backdrop-blur-xl transition-all hover:shadow-xl ${isDark ? "bg-white/5 border-white/10" : "bg-white/60 border-white/30"}`}>
             <div className="grid md:grid-cols-2 items-center">
               {/* Left - Offer Text */}
               <div className="bg-gradient-to-r from-red-600 to-red-700 p-8 flex items-center gap-4">
