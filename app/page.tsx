@@ -34,13 +34,54 @@ function AnimatedCounter({ end, duration = 2000, suffix = "" }: { end: number; d
   return <div ref={ref}>{count.toLocaleString()}{suffix}</div>
 }
 
+interface MarketItem {
+  symbol: string;
+  price: string;
+  change: string;
+  up: boolean;
+}
+
 export default function Home() {
   const [locale, setLocale] = useState<Locale>("en")
   const [mounted, setMounted] = useState(false)
+  const [marketData, setMarketData] = useState<MarketItem[]>([
+    { symbol: "GOLD", price: "4378.00", change: "4377.85", up: true },
+    { symbol: "TSLA.O", price: "363.60", change: "363.00", up: true },
+    { symbol: "NVDA.O", price: "218.04", change: "217.64", up: true },
+    { symbol: "AAPL.O", price: "316.52", change: "316.02", up: true },
+    { symbol: "GOOGL.O", price: "337.49", change: "336.80", up: true },
+    { symbol: "EUR/USD", price: "1.0850", change: "1.0835", up: true },
+    { symbol: "GBP/USD", price: "1.2720", change: "1.2705", up: true },
+    { symbol: "BTC/USD", price: "67850.00", change: "67720.00", up: true },
+    { symbol: "USD/JPY", price: "149.85", change: "149.60", up: false },
+    { symbol: "AMZN.O", price: "192.40", change: "191.85", up: true },
+    { symbol: "MSFT.O", price: "445.30", change: "444.75", up: true },
+    { symbol: "ETH/USD", price: "3450.00", change: "3435.00", up: true },
+    { symbol: "USD/CHF", price: "0.8750", change: "0.8760", up: false },
+    { symbol: "AUD/USD", price: "0.6520", change: "0.6510", up: true },
+  ])
   const { theme } = useTheme()
   const isDark = theme === "dark"
 
   const t = (key: string) => translate(locale, key)
+
+  // Fetch live market data
+  useEffect(() => {
+    const fetchMarket = async () => {
+      try {
+        const res = await fetch("/api/market")
+        const json = await res.json()
+        if (!json.fallback && json.data && json.data.length > 0) {
+          setMarketData(json.data)
+        }
+      } catch {
+        // Keep default/mock data on error
+      }
+    }
+    fetchMarket()
+    const interval = setInterval(fetchMarket, 30000) // Refresh every 30s
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -158,23 +199,7 @@ export default function Home() {
           <div className="flex animate-ticker whitespace-nowrap">
             {[...Array(2)].map((_, setIdx) => (
               <div key={setIdx} className="flex items-center gap-10 mr-10">
-                {[
-                  { symbol: "GOLD", price: "4378", change: "4377.85", up: true },
-                  { symbol: "TSLA.O", price: "363.6", change: "363", up: true },
-                  { symbol: "NVDA.O", price: "218.04", change: "217.64", up: true },
-                  { symbol: "AAPL.O", price: "316.52", change: "316.02", up: true },
-                  { symbol: "GOOGL.O", price: "337.49", change: "336.80", up: true },
-                  { symbol: "EUR/USD", price: "1.0850", change: "1.0835", up: true },
-                  { symbol: "GBP/USD", price: "1.2720", change: "1.2705", up: true },
-                  { symbol: "BTC/USD", price: "67850", change: "67720", up: true },
-                  { symbol: "USD/JPY", price: "149.85", change: "149.60", up: false },
-                  { symbol: "XAU/USD", price: "2435.50", change: "2432.00", up: true },
-                  { symbol: "AMZN.O", price: "192.40", change: "191.85", up: true },
-                  { symbol: "MSFT.O", price: "445.30", change: "444.75", up: true },
-                  { symbol: "ETH/USD", price: "3450", change: "3435", up: true },
-                  { symbol: "USD/CHF", price: "0.8750", change: "0.8760", up: false },
-                  { symbol: "AUD/USD", price: "0.6520", change: "0.6510", up: true },
-                ].map((item, i) => (
+                {marketData.map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <span className="text-sm font-bold text-gray-400">{item.symbol}</span>
                     <span className="text-base font-extrabold text-white">{item.price}</span>
