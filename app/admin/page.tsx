@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useTheme } from "@/components/ThemeProvider"
+import { t as translate, type Locale } from "@/lib/translations"
 
 const demoUsers = [
   { id: 1, name: "Imran Khan", email: "imran@gmail.com", plan: "Free", status: "Active", joinDate: "Jan 15, 2024", balance: "$12,450" },
@@ -20,26 +21,33 @@ const demoSignals = [
 export default function AdminDashboard() {
   const { theme } = useTheme()
   const isDark = theme === "dark"
+  const [locale, setLocale] = useState<Locale>("en")
   const [activeSection, setActiveSection] = useState<"overview" | "users" | "signals" | "content" | "settings">("overview")
   const [showNewSignal, setShowNewSignal] = useState(false)
   const [newSignal, setNewSignal] = useState({ pair: "", direction: "BUY", entry: "", tp: "", sl: "" })
   const [mounted, setMounted] = useState(false)
 
-  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    setMounted(true)
+    const params = new URLSearchParams(window.location.search)
+    setLocale((params.get("locale") || "en") as Locale)
+  }, [])
 
   if (!mounted) return null
 
+  const t = (key: string) => translate(locale, key)
+
   const sections = [
-    { id: "overview" as const, label: "Overview", icon: "📊" },
-    { id: "users" as const, label: "Users", icon: "👥" },
-    { id: "signals" as const, label: "Signals", icon: "📡" },
-    { id: "content" as const, label: "Content", icon: "📝" },
-    { id: "settings" as const, label: "Settings", icon: "⚙️" },
+    { id: "overview" as const, label: t("overview"), icon: "📊" },
+    { id: "users" as const, label: t("users"), icon: "👥" },
+    { id: "signals" as const, label: t("signals"), icon: "📡" },
+    { id: "content" as const, label: t("content"), icon: "📝" },
+    { id: "settings" as const, label: t("settings"), icon: "⚙️" },
   ]
 
   const handlePostSignal = () => {
     if (!newSignal.pair || !newSignal.entry) return
-    alert(`Signal posted: ${newSignal.direction} ${newSignal.pair} @ ${newSignal.entry}`)
+    alert(`${t("signalPosted")} ${newSignal.direction} ${newSignal.pair} @ ${newSignal.entry}`)
     setNewSignal({ pair: "", direction: "BUY", entry: "", tp: "", sl: "" })
     setShowNewSignal(false)
   }
@@ -55,12 +63,12 @@ export default function AdminDashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
-            <h1 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Admin Panel</h1>
-            <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">MASTER</span>
+            <h1 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{t("adminPanel")}</h1>
+            <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">{t("master")}</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Master Admin</span>
-            <a href="/" className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">Logout</a>
+            <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t("masterAdmin")}</span>
+            <a href="/" className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">{t("logout")}</a>
           </div>
         </div>
       </nav>
@@ -97,10 +105,10 @@ export default function AdminDashboard() {
                 {/* Stats */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
-                    { label: "Total Users", value: "2,847", change: "+124 this month", icon: "👥", color: "from-blue-500 to-blue-600" },
-                    { label: "Revenue", value: "$48,520", change: "+$5,200 this month", icon: "💰", color: "from-green-500 to-green-600" },
-                    { label: "Active Signals", value: "342", change: "12 today", icon: "📡", color: "from-purple-500 to-purple-600" },
-                    { label: "Premium Users", value: "856", change: "30% of total", icon: "⭐", color: "from-orange-500 to-orange-600" },
+                    { label: t("totalUsers"), value: "2,847", change: `+124 ${t("thisMonth")}`, icon: "👥", color: "from-blue-500 to-blue-600" },
+                    { label: t("revenue"), value: "$48,520", change: `+$5,200 ${t("thisMonth")}`, icon: "💰", color: "from-green-500 to-green-600" },
+                    { label: t("activeSignals"), value: "342", change: `12 ${t("today")}`, icon: "📡", color: "from-purple-500 to-purple-600" },
+                    { label: t("premiumUsers"), value: "856", change: `30% ${t("percentOfTotal")}`, icon: "⭐", color: "from-orange-500 to-orange-600" },
                   ].map((stat, i) => (
                     <div key={i} className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl p-5`}>
                       <div className="flex items-center justify-between mb-3">
@@ -115,14 +123,14 @@ export default function AdminDashboard() {
 
                 {/* Recent Activity */}
                 <div className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl p-6`}>
-                  <h3 className={`text-lg font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>Recent Activity</h3>
+                  <h3 className={`text-lg font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>{t("recentActivity")}</h3>
                   <div className="space-y-3">
                     {[
-                      { text: "New user registered: Sarah Ahmed", time: "5 min ago", icon: "👤", color: "text-blue-500" },
-                      { text: "Signal posted: EUR/USD BUY @ 1.0850", time: "15 min ago", icon: "📡", color: "text-green-500" },
-                      { text: "Premium upgrade: James Wilson", time: "1h ago", icon: "⭐", color: "text-yellow-500" },
-                      { text: "Signal TP Hit: XAU/USD +1.28%", time: "2h ago", icon: "🎯", color: "text-green-500" },
-                      { text: "New user registered: Ali Hassan", time: "3h ago", icon: "👤", color: "text-blue-500" },
+                      { text: `${t("newRegistered")} Sarah Ahmed`, time: `5 ${t("minAgo")}`, icon: "👤", color: "text-blue-500" },
+                      { text: `${t("signalPosted")} EUR/USD BUY @ 1.0850`, time: `15 ${t("minAgo")}`, icon: "📡", color: "text-green-500" },
+                      { text: `${t("premiumUpgrade")} James Wilson`, time: `1 ${t("hourAgo")}`, icon: "⭐", color: "text-yellow-500" },
+                      { text: `${t("signalTPHit")} XAU/USD +1.28%`, time: `2 ${t("hourAgo")}`, icon: "🎯", color: "text-green-500" },
+                      { text: `${t("newRegistered")} Ali Hassan`, time: `3 ${t("hourAgo")}`, icon: "👤", color: "text-blue-500" },
                     ].map((activity, i) => (
                       <div key={i} className={`flex items-center gap-3 p-3 rounded-xl ${isDark ? "bg-dark-700/50" : "bg-gray-50"}`}>
                         <span className={`text-xl ${activity.color}`}>{activity.icon}</span>
@@ -141,14 +149,14 @@ export default function AdminDashboard() {
             {activeSection === "users" && (
               <div className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl overflow-hidden`}>
                 <div className="p-6 flex items-center justify-between">
-                  <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>User Management</h3>
-                  <input type="text" placeholder="🔍 Search users..." className={`px-4 py-2 rounded-lg text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white placeholder-gray-500" : "bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400"}`} />
+                  <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{t("userManagement")}</h3>
+                  <input type="text" placeholder={`🔍 ${t("searchUsers")}`} className={`px-4 py-2 rounded-lg text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white placeholder-gray-500" : "bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400"}`} />
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className={isDark ? "bg-dark-700" : "bg-gray-50"}>
-                        {["User", "Email", "Plan", "Status", "Balance", "Actions"].map((h) => (
+                        {["User", "Email", "Plan", "Status", "Balance", t("edit")].map((h) => (
                           <th key={h} className={`text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider ${isDark ? "text-gray-400" : "text-gray-500"}`}>{h}</th>
                         ))}
                       </tr>
@@ -172,8 +180,8 @@ export default function AdminDashboard() {
                           <td className={`px-6 py-4 text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{user.balance}</td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
-                              <button className="text-blue-500 hover:text-blue-600 text-xs font-medium">Edit</button>
-                              <button className="text-red-500 hover:text-red-600 text-xs font-medium">Suspend</button>
+                              <button className="text-blue-500 hover:text-blue-600 text-xs font-medium">{t("edit")}</button>
+                              <button className="text-red-500 hover:text-red-600 text-xs font-medium">{t("suspend")}</button>
                             </div>
                           </td>
                         </tr>
@@ -188,29 +196,29 @@ export default function AdminDashboard() {
             {activeSection === "signals" && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Signal Management</h3>
+                  <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{t("signalManagement")}</h3>
                   <button onClick={() => setShowNewSignal(!showNewSignal)} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors flex items-center gap-2">
-                    <span>+</span> Post New Signal
+                    <span>+</span> {t("postNewSignal")}
                   </button>
                 </div>
 
                 {/* New Signal Form */}
                 {showNewSignal && (
                   <div className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl p-6 animate-fade-in`}>
-                    <h4 className={`font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>New Signal</h4>
+                    <h4 className={`font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>{t("newSignal")}</h4>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                      <input type="text" placeholder="Pair (EUR/USD)" value={newSignal.pair} onChange={(e) => setNewSignal({ ...newSignal, pair: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                      <input type="text" placeholder={t("pairLabel")} value={newSignal.pair} onChange={(e) => setNewSignal({ ...newSignal, pair: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
                       <select value={newSignal.direction} onChange={(e) => setNewSignal({ ...newSignal, direction: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`}>
                         <option value="BUY">BUY</option>
                         <option value="SELL">SELL</option>
                       </select>
-                      <input type="text" placeholder="Entry" value={newSignal.entry} onChange={(e) => setNewSignal({ ...newSignal, entry: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
-                      <input type="text" placeholder="Take Profit" value={newSignal.tp} onChange={(e) => setNewSignal({ ...newSignal, tp: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
-                      <input type="text" placeholder="Stop Loss" value={newSignal.sl} onChange={(e) => setNewSignal({ ...newSignal, sl: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                      <input type="text" placeholder={t("entryPlaceholder")} value={newSignal.entry} onChange={(e) => setNewSignal({ ...newSignal, entry: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                      <input type="text" placeholder={t("takeProfit")} value={newSignal.tp} onChange={(e) => setNewSignal({ ...newSignal, tp: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                      <input type="text" placeholder={t("stopLoss")} value={newSignal.sl} onChange={(e) => setNewSignal({ ...newSignal, sl: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
                     </div>
                     <div className="flex gap-3 mt-4">
-                      <button onClick={handlePostSignal} className="bg-green-600 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-green-700 transition-colors">Post Signal</button>
-                      <button onClick={() => setShowNewSignal(false)} className={`px-6 py-2 rounded-xl text-sm font-medium ${isDark ? "bg-dark-700 text-gray-300 hover:bg-dark-600" : "bg-gray-100 text-gray-600 hover:bg-gray-200"} transition-colors`}>Cancel</button>
+                      <button onClick={handlePostSignal} className="bg-green-600 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-green-700 transition-colors">{t("postSignal")}</button>
+                      <button onClick={() => setShowNewSignal(false)} className={`px-6 py-2 rounded-xl text-sm font-medium ${isDark ? "bg-dark-700 text-gray-300 hover:bg-dark-600" : "bg-gray-100 text-gray-600 hover:bg-gray-200"} transition-colors`}>{t("cancel")}</button>
                     </div>
                   </div>
                 )}
@@ -230,7 +238,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="flex items-center gap-3">
                         <span className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>{signal.posted}</span>
-                        <button className="text-red-500 hover:text-red-600 text-xs font-medium">Delete</button>
+                        <button className="text-red-500 hover:text-red-600 text-xs font-medium">{t("delete")}</button>
                       </div>
                     </div>
                   ))}
@@ -241,13 +249,13 @@ export default function AdminDashboard() {
             {/* CONTENT */}
             {activeSection === "content" && (
               <div className="space-y-4">
-                <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Content Management</h3>
+                <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{t("contentManagement")}</h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   {[
-                    { title: "Education Videos", desc: "Upload & manage video courses", icon: "🎬", count: "24 videos", color: "from-purple-500 to-purple-600" },
-                    { title: "News Articles", desc: "Write & publish market news", icon: "📰", count: "156 articles", color: "from-blue-500 to-blue-600" },
-                    { title: "Results & Reports", desc: "Monthly performance reports", icon: "📊", count: "12 reports", color: "from-green-500 to-green-600" },
-                    { title: "Broker Partners", desc: "Manage affiliate links & banners", icon: "🏦", count: "8 brokers", color: "from-orange-500 to-orange-600" },
+                    { title: t("educationVideos"), desc: t("uploadManageVideo"), icon: "🎬", count: `24 ${t("videos")}`, color: "from-purple-500 to-purple-600" },
+                    { title: t("newsArticles"), desc: t("writePublishNews"), icon: "📰", count: `156 ${t("articles")}`, color: "from-blue-500 to-blue-600" },
+                    { title: t("resultsReports"), desc: t("monthlyPerformance"), icon: "📊", count: `12 ${t("reports")}`, color: "from-green-500 to-green-600" },
+                    { title: t("brokerPartners"), desc: t("manageAffiliate"), icon: "🏦", count: `8 ${t("brokersCount")}`, color: "from-orange-500 to-orange-600" },
                   ].map((item, i) => (
                     <div key={i} className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl p-6 hover:shadow-lg transition-all cursor-pointer`}>
                       <div className="flex items-start justify-between mb-4">
@@ -265,19 +273,19 @@ export default function AdminDashboard() {
             {/* SETTINGS */}
             {activeSection === "settings" && (
               <div className="space-y-4">
-                <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Settings</h3>
+                <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{t("settings")}</h3>
                 {[
-                  { title: "Site Name", value: "Tokmat Academy", type: "text" },
-                  { title: "Support Email", value: "support@tokmatacademy.com", type: "email" },
-                  { title: "Telegram Link", value: "https://t.me/tokmatacademy", type: "text" },
-                  { title: "Max Free Signals/Day", value: "3", type: "number" },
+                  { title: t("siteName"), value: "Tokmat Academy", type: "text" },
+                  { title: t("supportEmail"), value: "support@tokmatacademy.com", type: "email" },
+                  { title: t("telegramLink"), value: "https://t.me/tokmatacademy", type: "text" },
+                  { title: t("maxFreeSignals"), value: "3", type: "number" },
                 ].map((setting, i) => (
                   <div key={i} className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-xl p-4 flex items-center justify-between`}>
                     <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>{setting.title}</label>
                     <input type={setting.type} defaultValue={setting.value} className={`px-4 py-2 rounded-lg text-sm border outline-none w-64 text-right ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
                   </div>
                 ))}
-                <button className="bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors">Save Settings</button>
+                <button className="bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors">{t("saveSettings")}</button>
               </div>
             )}
 

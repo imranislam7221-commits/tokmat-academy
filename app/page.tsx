@@ -123,6 +123,107 @@ export default function Home({ searchParams }: { searchParams: Promise<Record<st
         </div>
       </section>
 
+      {/* ===== Pricing Plans Section ===== */}
+      <section className="py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className={`text-3xl md:text-5xl font-extrabold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>{t("seeOurPlans")}</h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Free Plan */}
+            <div className={`rounded-2xl overflow-hidden border transition-all hover:shadow-xl ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-200"}`}>
+              <div className="bg-red-600 text-white text-center py-4">
+                <h3 className="text-2xl font-extrabold">{t("planFree")}</h3>
+              </div>
+              <div className="p-8">
+                <div className="space-y-6">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}><strong className="text-blue-500">{t("plan2to4")}</strong> {t("planSignalsPerMonth")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}><strong className="text-blue-500">{t("plan900to1500")}</strong> {t("planPointsTarget")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("planBasicSetup")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("planAllBrokers")}</span>
+                  </div>
+                </div>
+                <a href="/register" className="block w-full mt-8 border-2 border-red-600 text-red-600 font-bold py-3 rounded-xl text-center hover:bg-red-600 hover:text-white transition-all">
+                  {t("joinPlanBtn")}
+                </a>
+              </div>
+            </div>
+
+            {/* Premium Plan */}
+            <div className={`rounded-2xl overflow-hidden border-2 border-blue-600 relative transition-all hover:shadow-xl ${isDark ? "bg-dark-800" : "bg-white"}`}>
+              <span className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">{t("recommended")}</span>
+              <div className="bg-red-600 text-white text-center py-4">
+                <h3 className="text-2xl font-extrabold">{t("planPremium")}</h3>
+              </div>
+              <div className="p-8">
+                <div className="space-y-6">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}><strong className="text-blue-500">{t("plan8to14")}</strong> {t("planSignalsPerMonth")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}><strong className="text-blue-500">{t("plan3000to7000")}</strong> {t("planPointsTarget")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("planAccurate")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("planAllBrokers")}</span>
+                  </div>
+                </div>
+                <a href="/register" className="block w-full mt-8 bg-blue-600 text-white font-bold py-3 rounded-xl text-center hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">
+                  {t("joinPlanBtn")}
+                </a>
+              </div>
+            </div>
+
+            {/* Supreme Plan */}
+            <div className={`rounded-2xl overflow-hidden border transition-all hover:shadow-xl ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-200"}`}>
+              <div className="bg-red-600 text-white text-center py-4">
+                <h3 className="text-2xl font-extrabold">{t("planSupreme")}</h3>
+              </div>
+              <div className="p-8">
+                <div className="space-y-6">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}><strong className="text-blue-500">{t("plan16to25")}</strong> {t("planSignalsPerMonth")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}><strong className="text-blue-500">{t("plan7000to15000")}</strong> {t("planPointsTarget")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("planAccurate")}</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    <span className={`${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("planAllBrokers")}</span>
+                  </div>
+                </div>
+                <a href="/register" className="block w-full mt-8 border-2 border-red-600 text-red-600 font-bold py-3 rounded-xl text-center hover:bg-red-600 hover:text-white transition-all">
+                  {t("joinPlanBtn")}
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===== Stats Section (Animated Counters) ===== */}
       <section className="relative -mt-16 z-20 px-4">
         <div className="max-w-5xl mx-auto">

@@ -14,12 +14,14 @@ function getLocaleFromURL(): Locale {
 function getNavLinks(locale: Locale) {
   return [
     { id: 1, href: "/", label: t(locale, "navHome") },
-    { id: 2, href: "/results", label: t(locale, "navResults") },
-    { id: 3, href: "/news-analysis", label: t(locale, "navNews") },
-    { id: 4, href: "/faq", label: t(locale, "navFaq") },
-    { id: 5, href: "/brokers", label: t(locale, "navBrokers") },
-    { id: 6, href: "/education", label: t(locale, "navEducation") },
-    { id: 7, href: "https://t.me/tokmatacademy", label: t(locale, "navContact"), external: true },
+    { id: 2, href: "/signals", label: t(locale, "navSignals") },
+    { id: 3, href: "/results", label: t(locale, "navResults") },
+    { id: 4, href: "/news-analysis", label: t(locale, "navNews") },
+    { id: 5, href: "/education", label: t(locale, "navEducation") },
+    { id: 6, href: "/about-us", label: t(locale, "navAbout") },
+    { id: 7, href: "/faq", label: t(locale, "navFaq") },
+    { id: 8, href: "/contact", label: t(locale, "navContact") },
+    { id: 9, href: "/brokers", label: t(locale, "navBrokers") },
   ]
 }
 
@@ -87,16 +89,10 @@ export function Header({ locale: initialLocale }: { locale: string }) {
               <a
                 key={link.id}
                 href={link.href}
-                target={link.external ? "_blank" : undefined}
-                rel={link.external ? "noopener noreferrer" : undefined}
+                rel="noopener noreferrer"
                 className="nav-link text-[13px]"
               >
                 {link.label}
-                {link.external && (
-                  <svg className="inline w-3 h-3 ml-0.5 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                )}
               </a>
             ))}
           </nav>
@@ -202,7 +198,6 @@ export function Header({ locale: initialLocale }: { locale: string }) {
                 <a
                   key={link.id}
                   href={link.href}
-                  target={link.external ? "_blank" : undefined}
                   onClick={() => setMobileOpen(false)}
                   className={`px-4 py-3 font-medium rounded-lg transition-colors ${isDark ? "text-gray-300 hover:bg-blue-900/20 hover:text-blue-400" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"}`}
                 >

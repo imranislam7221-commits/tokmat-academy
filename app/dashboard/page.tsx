@@ -143,8 +143,8 @@ export default function DashboardPage() {
               {/* Recent Signals */}
               <div className={`lg:col-span-2 rounded-2xl border p-6 ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"}`}>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Recent Signals</h3>
-                  <button onClick={() => setActiveTab("signals")} className="text-blue-500 text-sm font-medium hover:text-blue-600">View All →</button>
+                  <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{t("recentSignals")}</h3>
+                  <button onClick={() => setActiveTab("signals")} className="text-blue-500 text-sm font-medium hover:text-blue-600">{t("viewAll")} →</button>
                 </div>
                 <div className="space-y-3">
                   {demoSignals.slice(0, 3).map((signal, i) => (
@@ -228,9 +228,9 @@ export default function DashboardPage() {
                   </div>
                   <div className="space-y-2 mb-4">
                     {[
-                      { label: "Entry", value: signal.entry, color: isDark ? "text-gray-300" : "text-gray-700" },
-                      { label: "Take Profit", value: signal.tp, color: "text-green-500" },
-                      { label: "Stop Loss", value: signal.sl, color: "text-red-500" },
+                      { label: t("entry"), value: signal.entry, color: isDark ? "text-gray-300" : "text-gray-700" },
+                      { label: t("takeProfit"), value: signal.tp, color: "text-green-500" },
+                      { label: t("stopLoss"), value: signal.sl, color: "text-red-500" },
                     ].map((item, j) => (
                       <div key={j} className="flex justify-between text-sm">
                         <span className={isDark ? "text-gray-400" : "text-gray-500"}>{item.label}</span>
@@ -256,7 +256,7 @@ export default function DashboardPage() {
                 <table className="w-full">
                   <thead>
                     <tr className={isDark ? "bg-dark-700" : "bg-gray-50"}>
-                      {["Date", "Pair", "Direction", "Result", "Profit", "Pips"].map((h) => (
+                      {[t("dateLabel"), t("pairLabel"), t("directionLabel"), t("resultLabel"), t("profitLabel"), t("pipsLabel")].map((h) => (
                         <th key={h} className={`text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider ${isDark ? "text-gray-400" : "text-gray-500"}`}>{h}</th>
                       ))}
                     </tr>
@@ -291,7 +291,7 @@ export default function DashboardPage() {
             <div className="grid md:grid-cols-2 gap-6">
               {/* Profile */}
               <div className={`rounded-2xl border p-6 ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"}`}>
-                <h3 className={`text-lg font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>Profile Information</h3>
+                <h3 className={`text-lg font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>{t("profileInformation")}</h3>
                 <div className="space-y-4">
                   {[
                     { label: t("firstNameLabel"), value: userData.firstName, icon: "👤" },
