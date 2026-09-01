@@ -123,6 +123,30 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== Stats Section (Animated Counters) ===== */}
+      <section className="relative -mt-16 z-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className={`rounded-2xl shadow-elevated border p-8 transition-colors ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"}`}>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {[
+                { end: 50000, suffix: "+", label: t("statsTraders"), color: "from-blue-500 to-blue-600", icon: "👥" },
+                { end: 50000, suffix: "+", label: t("statsSignals"), color: "from-green-500 to-emerald-600", icon: "📡" },
+                { end: 85, suffix: "%", label: t("statsWinRate"), color: "from-purple-500 to-purple-600", icon: "🎯" },
+                { end: 30, suffix: "+", label: t("statsCountries"), color: "from-orange-500 to-orange-600", icon: "🌍" },
+              ].map((stat, i) => (
+                <div key={i} className="text-center group cursor-default">
+                  <div className="text-2xl mb-2">{stat.icon}</div>
+                  <div className={`text-2xl md:text-3xl font-extrabold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent animate-count-fade`} style={{ animationDelay: `${i * 0.15}s` }}>
+                    <AnimatedCounter end={stat.end} suffix={stat.suffix} duration={2000} />
+                  </div>
+                  <div className={`text-sm font-medium mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===== Pricing Plans Section ===== */}
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
@@ -219,30 +243,6 @@ export default function Home() {
                   {t("joinPlanBtn")}
                 </a>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== Stats Section (Animated Counters) ===== */}
-      <section className="relative -mt-16 z-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className={`rounded-2xl shadow-elevated border p-8 transition-colors ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"}`}>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {[
-                { end: 50000, suffix: "+", label: t("statsTraders"), color: "from-blue-500 to-blue-600", icon: "👥" },
-                { end: 50000, suffix: "+", label: t("statsSignals"), color: "from-green-500 to-emerald-600", icon: "📡" },
-                { end: 85, suffix: "%", label: t("statsWinRate"), color: "from-purple-500 to-purple-600", icon: "🎯" },
-                { end: 30, suffix: "+", label: t("statsCountries"), color: "from-orange-500 to-orange-600", icon: "🌍" },
-              ].map((stat, i) => (
-                <div key={i} className="text-center group cursor-default">
-                  <div className="text-2xl mb-2">{stat.icon}</div>
-                  <div className={`text-2xl md:text-3xl font-extrabold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent animate-count-fade`} style={{ animationDelay: `${i * 0.15}s` }}>
-                    <AnimatedCounter end={stat.end} suffix={stat.suffix} duration={2000} />
-                  </div>
-                  <div className={`text-sm font-medium mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{stat.label}</div>
-                </div>
-              ))}
             </div>
           </div>
         </div>
