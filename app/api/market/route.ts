@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
 const SIGNAL_SYMBOLS = [
+  { symbol: "EURUSD=X", label: "EUR/USD", type: "forex" },
   { symbol: "GC=F", label: "XAU/USD", type: "commodity" },
+  { symbol: "GBPJPY=X", label: "GBP/JPY", type: "forex" },
 ];
 
 const TICKER_SYMBOLS = [
@@ -23,20 +25,21 @@ const TICKER_SYMBOLS = [
 
 function generateSignal(pair: { symbol: string; label: string; type: string }, price: number) {
   const isBuy = Math.random() > 0.35;
-  const tpPercent = 0.008 + Math.random() * 0.012;
-  const slPercent = 0.005 + Math.random() * 0.008;
+  const tpPercent = 0.005 + Math.random() * 0.008;
+  const slPercent = 0.003 + Math.random() * 0.005;
   const entry = price;
   const tp = isBuy ? entry * (1 + tpPercent) : entry * (1 - tpPercent);
   const sl = isBuy ? entry * (1 - slPercent) : entry * (1 + slPercent);
-  const profitPercent = 0.5 + Math.random() * 2.0;
+  const profitPercent = 0.2 + Math.random() * 2.0;
   const status = profitPercent > 1.0 ? "TP Hit" : "Running";
+  const decimals = pair.type === "forex" ? 5 : 2;
 
   return {
     pair: pair.label,
     direction: isBuy ? "BUY" : "SELL",
-    entry: entry.toFixed(2),
-    tp: tp.toFixed(2),
-    sl: sl.toFixed(2),
+    entry: entry.toFixed(decimals),
+    tp: tp.toFixed(decimals),
+    sl: sl.toFixed(decimals),
     profit: `+${profitPercent.toFixed(2)}%`,
     status,
     time: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),

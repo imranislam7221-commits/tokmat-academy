@@ -45,7 +45,9 @@ export default function Home() {
 
   // Live market data state
   const [signals, setSignals] = useState([
+    { pair: "EUR/USD", direction: "BUY", entry: "1.08500", tp: "1.09200", sl: "1.08100", profit: "+0.64%", status: "TP Hit", time: "10:30 AM" },
     { pair: "XAU/USD", direction: "BUY", entry: "2345.00", tp: "2375.00", sl: "2330.00", profit: "+1.28%", status: "TP Hit", time: "09:45 AM" },
+    { pair: "GBP/JPY", direction: "SELL", entry: "188.500", tp: "187.800", sl: "189.100", profit: "+0.37%", status: "Running", time: "11:15 AM" },
   ])
   const [marketData, setMarketData] = useState([
     { symbol: "GOLD", price: "2,435.50", change: "+0.24%", up: true },
@@ -413,9 +415,9 @@ export default function Home() {
             <p className="text-gray-400 text-lg max-w-xl mx-auto">{t("liveSignalsDesc")}</p>
           </div>
 
-          <div className="flex justify-center">
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto items-center">
             {signals.map((signal, i) => (
-              <div key={i} className="w-full max-w-sm bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 hover:border-green-500/30 hover:shadow-green-500/10 hover:shadow-2xl transition-all duration-500">
+              <div key={i} className={`w-full bg-white/5 backdrop-blur-xl border rounded-3xl p-6 md:p-8 transition-all duration-500 ${signal.pair === "XAU/USD" ? "border-yellow-500/30 hover:shadow-yellow-500/10 hover:shadow-2xl hover:border-yellow-500/50 md:scale-105" : "border-white/10 hover:border-green-500/30 hover:shadow-green-500/10 hover:shadow-xl"}`}>
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
