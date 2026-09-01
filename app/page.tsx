@@ -192,6 +192,34 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== Live Market Ticker ===== */}
+      <section className="relative z-20 py-4 overflow-hidden bg-dark-950 border-y border-white/5">
+        <div className="relative">
+          <div className="absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none bg-gradient-to-r from-dark-950 to-transparent"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none bg-gradient-to-l from-dark-950 to-transparent"></div>
+          <div className="flex animate-ticker whitespace-nowrap">
+            {[...Array(2)].map((_, setIdx) => (
+              <div key={setIdx} className="flex items-center gap-10 mr-10">
+                {marketData.map((item, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{item.symbol}</span>
+                    <span className="text-base font-extrabold text-white trading-price">{item.price}</span>
+                    <svg className={`w-4 h-4 ${item.up ? "text-green-400" : "text-red-400"}`} fill="currentColor" viewBox="0 0 20 20">
+                      {item.up ? (
+                        <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      ) : (
+                        <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      )}
+                    </svg>
+                    <span className={`text-sm font-semibold ${item.up ? "text-green-400" : "text-red-400"}`}>{item.change}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ===== Pricing Plans Section ===== */}
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
@@ -361,34 +389,6 @@ export default function Home() {
                 <h3 className={`text-lg font-bold mb-3 group-hover:text-blue-600 transition-colors ${isDark ? "text-white" : "text-gray-900"}`}>{feature.title}</h3>
                 <p className={`text-sm leading-relaxed ${isDark ? "text-gray-300" : "text-gray-600"}`}>{feature.desc}</p>
               </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== Live Market Ticker ===== */}
-      <section className="relative z-20 py-4 overflow-hidden bg-dark-950 border-y border-white/5">
-        <div className="relative">
-          <div className="absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none bg-gradient-to-r from-dark-950 to-transparent"></div>
-          <div className="absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none bg-gradient-to-l from-dark-950 to-transparent"></div>
-          <div className="flex animate-ticker whitespace-nowrap">
-            {[...Array(2)].map((_, setIdx) => (
-              <div key={setIdx} className="flex items-center gap-10 mr-10">
-                {marketData.map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{item.symbol}</span>
-                    <span className="text-base font-extrabold text-white trading-price">{item.price}</span>
-                    <svg className={`w-4 h-4 ${item.up ? "text-green-400" : "text-red-400"}`} fill="currentColor" viewBox="0 0 20 20">
-                      {item.up ? (
-                        <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                      ) : (
-                        <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      )}
-                    </svg>
-                    <span className={`text-sm font-semibold ${item.up ? "text-green-400" : "text-red-400"}`}>{item.change}</span>
-                  </div>
-                ))}
-              </div>
             ))}
           </div>
         </div>
