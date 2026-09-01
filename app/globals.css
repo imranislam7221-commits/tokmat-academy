@@ -329,33 +329,4 @@ body {
   animation: ticker-scroll 40s linear infinite;
 }
 
-/* ===== TradingView Ticker - Hide extra elements ===== */
-.tradingview-widget-container {
-  width: 100% !important;
-  overflow: hidden !important;
-}
 
-.tradingview-widget-container .tradingview-widget-container__widget {
-  width: 100% !important;
-}
-
-/* Hide TradingView logo, trending view, and extra UI */
-.tradingview-widget-container iframe {
-  width: 100% !important;
-}
-
-/* Hide any extra panels/banners from TradingView */
-.tradingview-widget-container > div:not(.tradingview-widget-container__widget) {
-  display: none !important;
-}
-
-/* Force iframe to stay within bounds */
-#tradingview-ticker {
-  max-height: 56px !important;
-  overflow: hidden !important;
-}
-
-#tradingview-ticker iframe {
-  max-height: 56px !important;
-  border: none !important;
-}
