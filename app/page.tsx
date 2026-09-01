@@ -34,53 +34,62 @@ function AnimatedCounter({ end, duration = 2000, suffix = "" }: { end: number; d
   return <div ref={ref}>{count.toLocaleString()}{suffix}</div>
 }
 
-interface MarketItem {
-  symbol: string;
-  price: string;
-  change: string;
-  up: boolean;
-}
-
 export default function Home() {
   const [locale, setLocale] = useState<Locale>("en")
   const [mounted, setMounted] = useState(false)
-  const [marketData, setMarketData] = useState<MarketItem[]>([
-    { symbol: "GOLD", price: "4378.00", change: "4377.85", up: true },
-    { symbol: "TSLA.O", price: "363.60", change: "363.00", up: true },
-    { symbol: "NVDA.O", price: "218.04", change: "217.64", up: true },
-    { symbol: "AAPL.O", price: "316.52", change: "316.02", up: true },
-    { symbol: "GOOGL.O", price: "337.49", change: "336.80", up: true },
-    { symbol: "EUR/USD", price: "1.0850", change: "1.0835", up: true },
-    { symbol: "GBP/USD", price: "1.2720", change: "1.2705", up: true },
-    { symbol: "BTC/USD", price: "67850.00", change: "67720.00", up: true },
-    { symbol: "USD/JPY", price: "149.85", change: "149.60", up: false },
-    { symbol: "AMZN.O", price: "192.40", change: "191.85", up: true },
-    { symbol: "MSFT.O", price: "445.30", change: "444.75", up: true },
-    { symbol: "ETH/USD", price: "3450.00", change: "3435.00", up: true },
-    { symbol: "USD/CHF", price: "0.8750", change: "0.8760", up: false },
-    { symbol: "AUD/USD", price: "0.6520", change: "0.6510", up: true },
-  ])
+  
   const { theme } = useTheme()
   const isDark = theme === "dark"
 
   const t = (key: string) => translate(locale, key)
 
-  // Fetch live market data
+  // Load TradingView Ticker Tape widget
   useEffect(() => {
-    const fetchMarket = async () => {
-      try {
-        const res = await fetch("/api/market")
-        const json = await res.json()
-        if (!json.fallback && json.data && json.data.length > 0) {
-          setMarketData(json.data)
-        }
-      } catch {
-        // Keep default/mock data on error
-      }
+    const container = document.getElementById("tradingview-ticker")
+    if (!container) return
+    container.innerHTML = ""
+
+    const widgetDiv = document.createElement("div")
+    widgetDiv.className = "tradingview-widget-container"
+    widgetDiv.innerHTML = `
+      <div class="tradingview-widget-container__widget"></div>
+    `
+
+    const script = document.createElement("script")
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js"
+    script.async = true
+    script.type = "text/javascript"
+    script.textContent = JSON.stringify({
+      symbols: [
+        { proName: "FOREXCOM:GOLD", title: "Gold" },
+        { proName: "NASDAQ:TSLA", title: "Tesla" },
+        { proName: "NASDAQ:NVDA", title: "NVIDIA" },
+        { proName: "NASDAQ:AAPL", title: "Apple" },
+        { proName: "NASDAQ:GOOGL", title: "Google" },
+        { proName: "FX:EURUSD", title: "EUR/USD" },
+        { proName: "FX:GBPUSD", title: "GBP/USD" },
+        { proName: "BINANCE:BTCUSDT", title: "BTC/USD" },
+        { proName: "FX:USDJPY", title: "USD/JPY" },
+        { proName: "NASDAQ:AMZN", title: "Amazon" },
+        { proName: "NASDAQ:MSFT", title: "Microsoft" },
+        { proName: "BINANCE:ETHUSDT", title: "ETH/USD" },
+        { proName: "FX:USDCHF", title: "USD/CHF" },
+        { proName: "FX:AUDUSD", title: "AUD/USD" },
+      ],
+      showSymbolLogo: true,
+      colorTheme: "dark",
+      isTransparent: false,
+      displayMode: "compact",
+      width: "100%",
+      height: 56,
+    })
+
+    widgetDiv.appendChild(script)
+    container.appendChild(widgetDiv)
+
+    return () => {
+      if (container) container.innerHTML = ""
     }
-    fetchMarket()
-    const interval = setInterval(fetchMarket, 30000) // Refresh every 30s
-    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
@@ -188,36 +197,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== Live Market Ticker ===== */}
-      <section className="relative z-20 py-4 overflow-hidden bg-dark-950">
-        <div className="relative">
-          {/* Fade edges */}
-          <div className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none bg-gradient-to-r from-dark-950 to-transparent"></div>
-          <div className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none bg-gradient-to-l from-dark-950 to-transparent"></div>
-
-          {/* Scrolling ticker */}
-          <div className="flex animate-ticker whitespace-nowrap">
-            {[...Array(2)].map((_, setIdx) => (
-              <div key={setIdx} className="flex items-center gap-10 mr-10">
-                {marketData.map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-gray-400">{item.symbol}</span>
-                    <span className="text-base font-extrabold text-white">{item.price}</span>
-                    <span className="text-gray-500">/</span>
-                    <span className="text-base font-medium text-gray-400">{item.change}</span>
-                    <svg className={`w-4 h-4 ${item.up ? "text-green-500" : "text-red-500"}`} fill="currentColor" viewBox="0 0 20 20">
-                      {item.up ? (
-                        <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                      ) : (
-                        <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      )}
-                    </svg>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* ===== Live Market Ticker (TradingView Real-Time) ===== */}
+      <section className="relative z-20 overflow-hidden bg-dark-950">
+        <div id="tradingview-ticker"></div>
       </section>
 
       {/* ===== Pricing Plans Section ===== */}
