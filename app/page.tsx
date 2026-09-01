@@ -147,6 +147,54 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== Live Market Ticker ===== */}
+      <section className="relative z-20 py-4 overflow-hidden">
+        <div className="relative">
+          {/* Fade edges */}
+          <div className={`absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none ${isDark ? "bg-gradient-to-r from-dark-950 to-transparent" : "bg-gradient-to-r from-white to-transparent"}`}></div>
+          <div className={`absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none ${isDark ? "bg-gradient-to-l from-dark-950 to-transparent" : "bg-gradient-to-l from-white to-transparent"}`}></div>
+
+          {/* Scrolling ticker */}
+          <div className="flex animate-ticker whitespace-nowrap">
+            {[...Array(2)].map((_, setIdx) => (
+              <div key={setIdx} className="flex items-center gap-8 mr-8">
+                {[
+                  { symbol: "GOLD", price: "4378", change: "4377.85", up: true },
+                  { symbol: "TSLA.O", price: "363.6", change: "363", up: true },
+                  { symbol: "NVDA.O", price: "218.04", change: "217.64", up: true },
+                  { symbol: "AAPL.O", price: "316.52", change: "316.02", up: true },
+                  { symbol: "GOOGL.O", price: "337.49", change: "336.80", up: true },
+                  { symbol: "EUR/USD", price: "1.0850", change: "1.0835", up: true },
+                  { symbol: "GBP/USD", price: "1.2720", change: "1.2705", up: true },
+                  { symbol: "BTC/USD", price: "67850", change: "67720", up: true },
+                  { symbol: "USD/JPY", price: "149.85", change: "149.60", up: false },
+                  { symbol: "XAU/USD", price: "2435.50", change: "2432.00", up: true },
+                  { symbol: "AMZN.O", price: "192.40", change: "191.85", up: true },
+                  { symbol: "MSFT.O", price: "445.30", change: "444.75", up: true },
+                  { symbol: "ETH/USD", price: "3450", change: "3435", up: true },
+                  { symbol: "USD/CHF", price: "0.8750", change: "0.8760", up: false },
+                  { symbol: "AUD/USD", price: "0.6520", change: "0.6510", up: true },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className={`text-xs font-bold ${isDark ? "text-gray-400" : "text-gray-600"}`}>{item.symbol}</span>
+                    <span className={`text-sm font-extrabold ${isDark ? "text-white" : "text-gray-900"}`}>{item.price}</span>
+                    <span className="text-gray-500">/</span>
+                    <span className="text-sm font-medium text-gray-500">{item.change}</span>
+                    <svg className={`w-3 h-3 ${item.up ? "text-green-500" : "text-red-500"}`} fill="currentColor" viewBox="0 0 20 20">
+                      {item.up ? (
+                        <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      ) : (
+                        <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      )}
+                    </svg>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ===== Pricing Plans Section ===== */}
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
