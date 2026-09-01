@@ -364,12 +364,12 @@ export default function Home() {
               { icon: "✅", title: t("resultsTitle"), desc: t("resultsDesc"), gradient: "from-green-500 to-green-600", glow: "shadow-green-500/20 hover:shadow-green-500/40", href: "/results" },
               { icon: "🎧", title: t("supportTitle"), desc: t("supportDesc"), gradient: "from-orange-500 to-orange-600", glow: "shadow-orange-500/20 hover:shadow-orange-500/40", href: "/faq" },
             ].map((feature, i) => (
-              <a key={i} href={feature.href} className={`feature-card group shadow-card ${feature.glow} hover:shadow-xl cursor-pointer`}>
+              <a key={i} href={feature.href} className={`group rounded-2xl p-8 backdrop-blur-xl border transition-all hover:shadow-xl hover:scale-105 cursor-pointer ${isDark ? "bg-white/5 border-white/10 hover:bg-white/10" : "bg-white/60 border-white/30 hover:bg-white/80"}`}>
                 <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 text-2xl`}>
                   {feature.icon}
                 </div>
                 <h3 className={`text-lg font-bold mb-3 group-hover:text-blue-600 transition-colors ${isDark ? "text-white" : "text-gray-900"}`}>{feature.title}</h3>
-                <p className={`text-sm leading-relaxed ${isDark ? "text-gray-400" : "text-gray-500"}`}>{feature.desc}</p>
+                <p className={`text-sm leading-relaxed ${isDark ? "text-gray-300" : "text-gray-600"}`}>{feature.desc}</p>
               </a>
             ))}
           </div>

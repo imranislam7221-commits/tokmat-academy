@@ -126,18 +126,10 @@ body {
 /* ===== Feature Card ===== */
 .feature-card {
   position: relative;
-  background: white;
   border-radius: 1rem;
   padding: 2rem;
   overflow: hidden;
-  border: 1px solid rgba(241, 245, 249, 0.8);
   transition: all 0.5s ease-out;
-}
-
-.feature-card:hover {
-  transform: translateY(-8px);
-  border-color: transparent;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
 }
 
 /* ===== Nav Link ===== */
