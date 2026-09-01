@@ -44,6 +44,11 @@ export default function Home() {
   const t = (key: string) => translate(locale, key)
 
   // Live market data state
+  const [signals, setSignals] = useState([
+    { pair: "EUR/USD", direction: "BUY", entry: "1.08500", tp: "1.09200", sl: "1.08100", profit: "+0.64%", status: "TP Hit", time: "10:30 AM" },
+    { pair: "GBP/JPY", direction: "SELL", entry: "188.500", tp: "187.800", sl: "189.100", profit: "+0.37%", status: "Running", time: "11:15 AM" },
+    { pair: "XAU/USD", direction: "BUY", entry: "2345.00", tp: "2375.00", sl: "2330.00", profit: "+1.28%", status: "TP Hit", time: "09:45 AM" },
+  ])
   const [marketData, setMarketData] = useState([
     { symbol: "GOLD", price: "2,435.50", change: "+0.24%", up: true },
     { symbol: "TSLA", price: "363.60", change: "+0.17%", up: true },
@@ -61,19 +66,19 @@ export default function Home() {
     { symbol: "AUD/USD", price: "0.6520", change: "+0.15%", up: true },
   ])
 
-  // Fetch live market data from API + simulate micro movements
+  // Fetch live market data + signals from API
   useEffect(() => {
     const fetchMarket = async () => {
       try {
         const res = await fetch("/api/market")
         const json = await res.json()
-        if (!json.fallback && json.data && json.data.length > 0) {
-          setMarketData(json.data.map((item: { symbol: string; price: string; change: string; up: boolean }) => ({
-            symbol: item.symbol,
-            price: item.price,
-            change: item.up ? `+${(((Math.random() * 0.5) + 0.05)).toFixed(2)}%` : `-${(((Math.random() * 0.5) + 0.05)).toFixed(2)}%`,
-            up: item.up,
-          })))
+        if (!json.fallback) {
+          if (json.ticker && json.ticker.length > 0) {
+            setMarketData(json.ticker)
+          }
+          if (json.signals && json.signals.length > 0) {
+            setSignals(json.signals)
+          }
         }
       } catch {
         // Keep default data on error
@@ -415,14 +420,13 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {[
-              { pair: "EUR/USD", direction: "BUY", entry: "1.0850", tp: "1.0920", sl: "1.0810", profit: "+0.64%", status: "TP Hit", statusColor: "bg-green-500/20 text-green-400 border-green-500/30" },
-              { pair: "GBP/JPY", direction: "SELL", entry: "188.500", tp: "187.800", sl: "189.100", profit: "+0.37%", status: "Running", statusColor: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-              { pair: "XAU/USD", direction: "BUY", entry: "2345.00", tp: "2375.00", sl: "2330.00", profit: "+1.28%", status: "TP Hit", statusColor: "bg-green-500/20 text-green-400 border-green-500/30" },
-            ].map((signal, i) => (
+            {signals.map((signal, i) => (
               <div key={i} className="trading-card">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="text-white font-bold text-lg">{signal.pair}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-white font-bold text-lg">{signal.pair}</div>
+                    <span className="text-xs text-gray-500">{signal.time}</span>
+                  </div>
                   <span className={`signal-badge ${signal.direction === "BUY" ? "signal-buy" : "signal-sell"}`}>{signal.direction}</span>
                 </div>
                 <div className="space-y-3 mb-4">
@@ -441,7 +445,7 @@ export default function Home() {
                 </div>
                 <div className="border-t border-dark-700/50 pt-4 flex items-center justify-between">
                   <span className="text-green-400 font-bold trading-price">{signal.profit}</span>
-                  <span className={`signal-badge border ${signal.statusColor}`}>{signal.status}</span>
+                  <span className={`signal-badge border ${signal.status === "TP Hit" ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-blue-500/20 text-blue-400 border-blue-500/30"}`}>{signal.status}</span>
                 </div>
               </div>
             ))}
