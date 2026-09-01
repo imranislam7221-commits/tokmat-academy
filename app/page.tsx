@@ -415,44 +415,44 @@ export default function Home() {
 
           <div className="flex justify-center">
             {signals.map((signal, i) => (
-              <div key={i} className="w-full max-w-lg bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-10 hover:border-green-500/30 hover:shadow-green-500/10 hover:shadow-2xl transition-all duration-500">
+              <div key={i} className="w-full max-w-sm bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 hover:border-green-500/30 hover:shadow-green-500/10 hover:shadow-2xl transition-all duration-500">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/20">
-                      <span className="text-2xl">🥇</span>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/20">
+                      <span className="text-xl">🥇</span>
                     </div>
                     <div>
-                      <div className="text-white font-extrabold text-2xl">{signal.pair}</div>
-                      <div className="text-gray-500 text-sm mt-0.5">{signal.time}</div>
+                      <div className="text-white font-extrabold text-xl">{signal.pair}</div>
+                      <div className="text-gray-500 text-xs mt-0.5">{signal.time}</div>
                     </div>
                   </div>
-                  <span className={`signal-badge text-sm px-4 py-2 ${signal.direction === "BUY" ? "signal-buy" : "signal-sell"}`}>{signal.direction}</span>
+                  <span className={`signal-badge text-xs px-3 py-1.5 ${signal.direction === "BUY" ? "signal-buy" : "signal-sell"}`}>{signal.direction}</span>
                 </div>
 
                 {/* Price Levels */}
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center justify-between bg-white/5 rounded-xl px-5 py-4">
-                    <span className="text-gray-400 font-medium">{t("entry")}</span>
-                    <span className="text-white trading-price font-extrabold text-xl">{signal.entry}</span>
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center justify-between bg-white/5 rounded-xl px-4 py-3">
+                    <span className="text-gray-400 font-medium text-sm">{t("entry")}</span>
+                    <span className="text-white trading-price font-extrabold text-lg">{signal.entry}</span>
                   </div>
-                  <div className="flex items-center justify-between bg-green-500/5 border border-green-500/10 rounded-xl px-5 py-4">
-                    <span className="text-green-400 font-medium">{t("takeProfit")}</span>
-                    <span className="text-green-400 trading-price font-extrabold text-xl">{signal.tp}</span>
+                  <div className="flex items-center justify-between bg-green-500/5 border border-green-500/10 rounded-xl px-4 py-3">
+                    <span className="text-green-400 font-medium text-sm">{t("takeProfit")}</span>
+                    <span className="text-green-400 trading-price font-extrabold text-lg">{signal.tp}</span>
                   </div>
-                  <div className="flex items-center justify-between bg-red-500/5 border border-red-500/10 rounded-xl px-5 py-4">
-                    <span className="text-red-400 font-medium">{t("stopLoss")}</span>
-                    <span className="text-red-400 trading-price font-extrabold text-xl">{signal.sl}</span>
+                  <div className="flex items-center justify-between bg-red-500/5 border border-red-500/10 rounded-xl px-4 py-3">
+                    <span className="text-red-400 font-medium text-sm">{t("stopLoss")}</span>
+                    <span className="text-red-400 trading-price font-extrabold text-lg">{signal.sl}</span>
                   </div>
                 </div>
 
                 {/* Footer */}
-                <div className="border-t border-white/10 pt-6 flex items-center justify-between">
+                <div className="border-t border-white/10 pt-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-500">Profit:</span>
-                    <span className="text-green-400 font-extrabold text-xl trading-price">{signal.profit}</span>
+                    <span className="text-gray-500 text-sm">Profit:</span>
+                    <span className="text-green-400 font-extrabold text-lg trading-price">{signal.profit}</span>
                   </div>
-                  <span className={`signal-badge border text-sm px-4 py-2 ${signal.status === "TP Hit" ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-blue-500/20 text-blue-400 border-blue-500/30"}`}>{signal.status}</span>
+                  <span className={`signal-badge border text-xs px-3 py-1.5 ${signal.status === "TP Hit" ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-blue-500/20 text-blue-400 border-blue-500/30"}`}>{signal.status}</span>
                 </div>
               </div>
             ))}
