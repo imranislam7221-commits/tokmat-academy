@@ -148,16 +148,16 @@ export default function Home() {
       </section>
 
       {/* ===== Live Market Ticker ===== */}
-      <section className="relative z-20 py-4 overflow-hidden">
+      <section className="relative z-20 py-4 overflow-hidden bg-dark-950">
         <div className="relative">
           {/* Fade edges */}
-          <div className={`absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none ${isDark ? "bg-gradient-to-r from-dark-950 to-transparent" : "bg-gradient-to-r from-white to-transparent"}`}></div>
-          <div className={`absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none ${isDark ? "bg-gradient-to-l from-dark-950 to-transparent" : "bg-gradient-to-l from-white to-transparent"}`}></div>
+          <div className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none bg-gradient-to-r from-dark-950 to-transparent"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none bg-gradient-to-l from-dark-950 to-transparent"></div>
 
           {/* Scrolling ticker */}
           <div className="flex animate-ticker whitespace-nowrap">
             {[...Array(2)].map((_, setIdx) => (
-              <div key={setIdx} className="flex items-center gap-8 mr-8">
+              <div key={setIdx} className="flex items-center gap-10 mr-10">
                 {[
                   { symbol: "GOLD", price: "4378", change: "4377.85", up: true },
                   { symbol: "TSLA.O", price: "363.6", change: "363", up: true },
@@ -176,11 +176,11 @@ export default function Home() {
                   { symbol: "AUD/USD", price: "0.6520", change: "0.6510", up: true },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <span className={`text-xs font-bold ${isDark ? "text-gray-400" : "text-gray-600"}`}>{item.symbol}</span>
-                    <span className={`text-sm font-extrabold ${isDark ? "text-white" : "text-gray-900"}`}>{item.price}</span>
+                    <span className="text-sm font-bold text-gray-400">{item.symbol}</span>
+                    <span className="text-base font-extrabold text-white">{item.price}</span>
                     <span className="text-gray-500">/</span>
-                    <span className="text-sm font-medium text-gray-500">{item.change}</span>
-                    <svg className={`w-3 h-3 ${item.up ? "text-green-500" : "text-red-500"}`} fill="currentColor" viewBox="0 0 20 20">
+                    <span className="text-base font-medium text-gray-400">{item.change}</span>
+                    <svg className={`w-4 h-4 ${item.up ? "text-green-500" : "text-red-500"}`} fill="currentColor" viewBox="0 0 20 20">
                       {item.up ? (
                         <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
                       ) : (
