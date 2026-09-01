@@ -1,6 +1,6 @@
 "use client"
+import { useState, useEffect } from "react"
 
-import { use } from "react"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
 
@@ -16,9 +16,10 @@ const signals = [
   { pair: "USD/CAD", direction: "SELL", entry: "1.3650", tp: "1.3580", sl: "1.3700", profit: "+0.51%", status: "TP Hit", color: "bg-green-500/20 text-green-400 border-green-500/30", lightColor: "bg-green-100 text-green-700 border-green-200" },
 ]
 
-export default function NewsAnalysisPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
-  const params = use(searchParams)
-  const locale = (params?.locale || "en") as Locale
+export default function NewsAnalysisPage() {
+  
+  const [locale, setLocale] = useState<Locale>("en")
+  useEffect(() => { const p = new URLSearchParams(window.location.search); setLocale((p.get("locale") || "en") as Locale); }, [])
   const { theme } = useTheme()
   const isDark = theme === "dark"
   const t = (key: string) => translate(locale, key)

@@ -1,12 +1,12 @@
 "use client"
+import { useState, useEffect } from "react"
 
-import { use, useState, useEffect } from "react"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
 
-export default function RegisterPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
-  const params = use(searchParams)
-  const locale = (params?.locale || "en") as Locale
+export default function RegisterPage() {
+  
+  const [locale, setLocale] = useState<Locale>("en")
   const { theme } = useTheme()
   const isDark = theme === "dark"
   const t = (key: string) => translate(locale, key)

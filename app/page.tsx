@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, use, useState, useRef } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
 
@@ -34,9 +34,8 @@ function AnimatedCounter({ end, duration = 2000, suffix = "" }: { end: number; d
   return <div ref={ref}>{count.toLocaleString()}{suffix}</div>
 }
 
-export default function Home({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
-  const params = use(searchParams)
-  const locale = (params?.locale || "en") as Locale
+export default function Home() {
+  const [locale, setLocale] = useState<Locale>("en")
   const [mounted, setMounted] = useState(false)
   const { theme } = useTheme()
   const isDark = theme === "dark"
@@ -44,9 +43,10 @@ export default function Home({ searchParams }: { searchParams: Promise<Record<st
   const t = (key: string) => translate(locale, key)
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setLocale((params.get("locale") || "en") as Locale)
     setMounted(true)
-    window.history.pushState({}, "", `?locale=${locale}`)
-  }, [locale])
+  }, [])
 
   return (
     <main className={`min-h-screen ${isDark ? "bg-dark-950" : "bg-white"}`}>
