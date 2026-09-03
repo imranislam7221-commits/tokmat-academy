@@ -74,7 +74,7 @@ export function Header({ locale: initialLocale }: { locale: string }) {
               </svg>
             </div>
             <div className="flex flex-col leading-none">
-              <span className={`text-xl font-extrabold tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>
+              <span className={`text-xl sm:text-2xl font-extrabold tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>
                 Tokmat <span className="text-blue-600">Academy</span>
               </span>
               <span className="text-[10px] text-gray-400 font-medium tracking-wider uppercase hidden sm:block">
@@ -90,7 +90,7 @@ export function Header({ locale: initialLocale }: { locale: string }) {
                 key={link.id}
                 href={link.href}
                 rel="noopener noreferrer"
-                className="nav-link text-[13px]"
+                className="nav-link text-lg font-semibold"
               >
                 {link.label}
               </a>
@@ -168,7 +168,7 @@ export function Header({ locale: initialLocale }: { locale: string }) {
             </div>
 
             {/* CTA Button */}
-            <a href="/register" className={`hidden sm:inline-flex !px-4 sm:!px-5 !py-2.5 !text-sm !rounded-lg font-semibold transition-all ${isDark ? "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20" : "btn-primary"}`}>
+            <a href="/register" className={`hidden sm:inline-flex !px-4 sm:!px-5 !py-2.5 !text-lg !rounded-lg font-semibold transition-all ${isDark ? "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20" : "btn-primary"}`}>
               {t(currentLocale, "navJoinFree")}
             </a>
 
@@ -199,7 +199,7 @@ export function Header({ locale: initialLocale }: { locale: string }) {
                   key={link.id}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`px-4 py-3 font-medium rounded-lg transition-colors ${isDark ? "text-gray-300 hover:bg-blue-900/20 hover:text-blue-400" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"}`}
+                  className={`px-4 py-3 font-medium text-lg rounded-lg transition-colors ${isDark ? "text-gray-300 hover:bg-blue-900/20 hover:text-blue-400" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"}`}
                 >
                   {link.label}
                 </a>
