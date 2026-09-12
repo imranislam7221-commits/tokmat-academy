@@ -31,3 +31,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# persisted signals (keep folder)
+!data/
+!data/.gitkeep

@@ -50,6 +50,24 @@ export default function DashboardPage() {
     return new URLSearchParams(window.location.search).get("locale") || "en"
   }
 
+
+  // Real session guard: server theke check — admin -> /admin, not logged -> /login
+  useEffect(() => {
+    fetch("/api/auth")
+      .then(r => r.json())
+      .then(j => {
+        if (!j.ok || !j.user) { window.location.href = "/login"; return; }
+        if (j.user.role === "admin") { window.location.href = "/admin"; return; }
+        setUserData((p: typeof defaultUserData) => ({
+          ...p,
+          firstName: j.user.firstName || p.firstName,
+          lastName: j.user.lastName || p.lastName,
+          email: j.user.email || p.email,
+          joinDate: j.user.joined ? new Date(j.user.joined).toISOString().slice(0, 10) : p.joinDate,
+        }))
+      })
+      .catch(() => { window.location.href = "/login"; })
+  }, [])
   useEffect(() => {
     setMounted(true)
     const saved = localStorage.getItem("userData")
@@ -175,7 +193,7 @@ export default function DashboardPage() {
                   <h3 className={`text-lg font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>{t("quickActions")}</h3>
                   <div className="space-y-2">
                     {[
-                      { label: t("joinTelegram"), desc: t("getSignalsOnTelegram"), icon: "📱", href: "https://t.me/tokmatacademy", color: "bg-blue-50 hover:bg-blue-100 text-blue-700" },
+                      { label: t("joinTelegram"), desc: t("getSignalsOnTelegram"), icon: "📱", href: "https://t.me/TokmatSignal", color: "bg-blue-50 hover:bg-blue-100 text-blue-700" },
                       { label: t("educationCenter"), desc: t("learnTradingStrategies"), icon: "📚", href: "/education", color: "bg-purple-50 hover:bg-purple-100 text-purple-700" },
                       { label: t("viewResultsDash"), desc: t("seeTrackRecord"), icon: "🏆", href: "/results", color: "bg-green-50 hover:bg-green-100 text-green-700" },
                     ].map((action, i) => (

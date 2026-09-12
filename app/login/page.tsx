@@ -1,11 +1,12 @@
 "use client"
 import { useState, useEffect } from "react"
 
+import Link from "next/link"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
 
 export default function LoginPage() {
-  
+
   const [locale, setLocale] = useState<Locale>("en")
   useEffect(() => { const p = new URLSearchParams(window.location.search); setLocale((p.get("locale") || "en") as Locale); }, [])
   const { theme } = useTheme()
@@ -15,25 +16,63 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [errorMsg, setErrorMsg] = useState("")
+
+  const showToast = (text: string, color: string) => {
+    const toast = document.createElement("div");
+    toast.textContent = text;
+    toast.className = `fixed bottom-6 right-6 ${color} text-white px-5 py-3 rounded-xl shadow-xl z-50 text-sm font-bold`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+    if (!email.trim() || !password) {
+      setErrorMsg("Please enter email & password");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "login", email: email.trim(), password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        showToast("Login success! Redirecting...", "bg-green-600");
+        setTimeout(() => { window.location.href = data.redirect || "/dashboard"; }, 800);
+      } else {
+        setErrorMsg(data.error || "Login failed");
+        setSubmitting(false);
+      }
+    } catch {
+      setErrorMsg("Server error. Is the server running?");
+      setSubmitting(false);
+    }
+  };
 
   return (
     <main className={`min-h-screen flex items-center justify-center px-4 transition-colors ${isDark ? "bg-dark-950" : "bg-gray-50"}`}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <a href="/" className="inline-flex items-center gap-2 mb-4">
+          <Link href="/" className="inline-flex items-center gap-2 mb-4">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
             </div>
             <span className={`text-2xl font-extrabold ${isDark ? "text-white" : "text-gray-900"}`}>Tokmat <span className="text-blue-600">Academy</span></span>
-          </a>
+          </Link>
           <h1 className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{t("loginTitle")}</h1>
           <p className={`text-sm mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t("loginSubtitle")}</p>
         </div>
 
         <div className={`rounded-2xl p-8 shadow-elevated border transition-colors ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"}`}>
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("email")}</label>
               <div className="relative">
@@ -63,6 +102,12 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {errorMsg && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm font-medium">
+                {errorMsg}
+              </div>
+            )}
+
             <div className="flex items-center justify-between text-sm">
               <label className={`flex items-center gap-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                 <input type="checkbox" className="rounded border-gray-300" /> {t("rememberMe")}
@@ -70,7 +115,15 @@ export default function LoginPage() {
               <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">{t("forgotPassword")}</a>
             </div>
 
-            <button type="submit" className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-colors">{t("signInButton")}</button>
+            <button type="submit" disabled={submitting}
+              className={`w-full text-white font-bold py-3 rounded-xl transition-all ${submitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}>
+              {submitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                  Logging in...
+                </span>
+              ) : t("signInButton")}
+            </button>
           </form>
 
           <div className="flex items-center gap-3 my-6">
@@ -85,7 +138,7 @@ export default function LoginPage() {
           </button>
 
           <div className="mt-6 text-center text-sm">
-            <span className={isDark ? "text-gray-400" : "text-gray-500"}>{t("dontHaveAccount")}</span> <a href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">{t("signUp")}</a>
+            <span className={isDark ? "text-gray-400" : "text-gray-500"}>{t("dontHaveAccount")}</span> <Link href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">{t("signUp")}</Link>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
 
-const signals = [
+const fallbackSignals = [
   { pair: "EUR/USD", dir: "BUY", entry: "1.0850", tp: "1.0920", sl: "1.0810", profit: "+0.64%", status: "TP Hit" },
   { pair: "GBP/JPY", dir: "SELL", entry: "188.500", tp: "187.800", sl: "189.100", profit: "+0.37%", status: "Running" },
   { pair: "XAU/USD", dir: "BUY", entry: "2345.00", tp: "2375.00", sl: "2330.00", profit: "+1.28%", status: "TP Hit" },
@@ -14,16 +14,32 @@ const signals = [
 ]
 
 export default function SignalsPage() {
-  
+  const [signals, setSignals] = useState(fallbackSignals)
   const [locale, setLocale] = useState<Locale>("en")
   useEffect(() => { const p = new URLSearchParams(window.location.search); setLocale((p.get("locale") || "en") as Locale); }, [])
+  useEffect(() => {
+    let alive = true
+    const load = async () => {
+      try {
+        const res = await fetch("/api/signals", { cache: "no-store" })
+        const j = await res.json()
+        if (alive && Array.isArray(j.signals) && j.signals.length) {
+          const mapped = j.signals.map((s:any)=>({ pair:s.pair, dir:s.direction||s.dir, entry:s.entry, tp:s.tp, sl:s.sl, profit:s.profit, status:s.status }))
+          setSignals(mapped)
+        }
+      } catch {}
+    }
+    load()
+    const id = setInterval(load, 15000)
+    return ()=>{ alive=false; clearInterval(id)}
+  }, [])
   const { theme } = useTheme()
   const isDark = theme === "dark"
   const t = (key: string) => translate(locale, key)
 
   return (
     <main className={`min-h-screen transition-colors duration-300 ${isDark ? "bg-dark-950" : "bg-gray-50"}`}>
-      <section className={`py-14 px-4 relative overflow-hidden ${isDark ? "" : "bg-gradient-to-br from-dark-950 via-dark-900 to-blue-950"}`}>
+      <section className={`py-14 pt-20 -mt-20 px-4 relative overflow-hidden ${isDark ? "" : "bg-gradient-to-br from-dark-950 via-dark-900 to-blue-950"}`}>
         <div className="absolute inset-0 bg-grid opacity-20"></div>
         <div className="relative max-w-7xl mx-auto text-center">
           <div className="inline-block bg-green-500/10 text-green-400 text-sm font-semibold px-4 py-1.5 rounded-full border border-green-500/20 mb-4">

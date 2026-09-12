@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
 
@@ -111,7 +112,7 @@ export default function EducationPage() {
             <div className="relative aspect-video bg-dark-950">
               {!selectedCourse.free && !playing ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-dark-900 to-dark-950">
-                  <img src={selectedCourse.thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 blur-sm" />
+                  <Image src={selectedCourse.thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 blur-sm" />
                   <div className="relative z-10 text-center">
                     <div className="w-20 h-20 bg-yellow-500/20 rounded-full flex items-center justify-center border-2 border-yellow-500/50 mx-auto mb-6">
                       <svg className="w-8 h-8 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>
@@ -123,7 +124,7 @@ export default function EducationPage() {
                 </div>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-dark-950">
-                  <img src={selectedCourse.thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                  <Image src={selectedCourse.thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
                   <button onClick={() => setPlaying(!playing)} className="relative z-10 w-20 h-20 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center hover:bg-white/30 transition-all mx-auto">
                     <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                   </button>
@@ -173,7 +174,7 @@ export default function EducationPage() {
           {filtered.map((course) => (
             <div key={course.id} onClick={() => setSelectedCourse(course)} className={`rounded-2xl overflow-hidden border hover:shadow-elevated hover:-translate-y-1 transition-all duration-300 group cursor-pointer ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"}`}>
               <div className="relative h-44 overflow-hidden">
-                <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <Image src={course.thumbnail} alt={course.title} width={400} height={220} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className={`absolute inset-0 bg-gradient-to-t ${course.color} opacity-50`}></div>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">

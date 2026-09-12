@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 
+import Link from "next/link"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
 
@@ -53,28 +54,54 @@ export default function RegisterPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
     setSubmitting(true)
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "register", firstName, lastName, email: email.trim(), password }),
+      })
+      const data = await res.json()
+      if (res.ok && data.ok) {
+        const isAdmin2 = data.user?.role === "admin"
+        const toast = document.createElement("div")
+        toast.textContent = isAdmin2 ? "Admin account created! Redirecting..." : "Account created! Redirecting..."
+        toast.className = "fixed bottom-6 right-6 bg-green-600 text-white px-5 py-3 rounded-xl shadow-xl z-50 text-sm font-bold"
+        document.body.appendChild(toast)
+        setTimeout(() => { toast.remove(); window.location.href = data.redirect || "/dashboard" }, 1000)
+      } else {
+        setSubmitting(false)
+        const toast = document.createElement("div")
+        toast.textContent = data.error || "Registration failed"
+        toast.className = "fixed bottom-6 right-6 bg-red-600 text-white px-5 py-3 rounded-xl shadow-xl z-50 text-sm font-bold"
+        document.body.appendChild(toast)
+        setTimeout(() => toast.remove(), 3000)
+      }
+    } catch {
       setSubmitting(false)
-      alert(`${firstName} ${lastName} - Account created! (${email})`)
-    }, 1500)
+      const toast = document.createElement("div")
+      toast.textContent = "Server error. Is the server running?"
+      toast.className = "fixed bottom-6 right-6 bg-red-600 text-white px-5 py-3 rounded-xl shadow-xl z-50 text-sm font-bold"
+      document.body.appendChild(toast)
+      setTimeout(() => toast.remove(), 3000)
+    }
   }
 
   return (
     <main className={`min-h-screen flex items-center justify-center px-4 py-12 transition-colors ${isDark ? "bg-dark-950" : "bg-gray-50"}`}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <a href="/" className="inline-flex items-center gap-2 mb-4">
+          <Link href="/" className="inline-flex items-center gap-2 mb-4">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
             </div>
             <span className={`text-2xl font-extrabold ${isDark ? "text-white" : "text-gray-900"}`}>Tokmat <span className="text-blue-600">Academy</span></span>
-          </a>
+          </Link>
           <h1 className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{t("registerTitle")}</h1>
           <p className={`text-sm mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t("registerSubtitle")}</p>
         </div>

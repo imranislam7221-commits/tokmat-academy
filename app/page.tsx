@@ -1,37 +1,33 @@
 "use client"
 
+import Link from "next/link"
+import Image from "next/image"
 import { useEffect, useState, useRef } from "react"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
 
-// Animated Counter Component
+// Animated Counter Component - counts up when page loads
 function AnimatedCounter({ end, duration = 2000, suffix = "" }: { end: number; duration?: number; suffix?: string }) {
   const [count, setCount] = useState(0)
-  const [isVisible, setIsVisible] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) setIsVisible(true)
-    }, { threshold: 0.3 })
-    if (ref.current) observer.observe(ref.current)
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    if (!isVisible) return
-    let startTime = 0
-    const step = (timestamp: number) => {
-      if (!startTime) startTime = timestamp
-      const progress = Math.min((timestamp - startTime) / duration, 1)
+    const steps = 60
+    const interval = duration / steps
+    let current = 0
+    const timer = setInterval(() => {
+      current++
+      const progress = current / steps
       const eased = 1 - Math.pow(1 - progress, 3)
       setCount(Math.floor(eased * end))
-      if (progress < 1) requestAnimationFrame(step)
-    }
-    requestAnimationFrame(step)
-  }, [isVisible, end, duration])
+      if (current >= steps) {
+        setCount(end)
+        clearInterval(timer)
+      }
+    }, interval)
+    return () => clearInterval(timer)
+  }, [end, duration])
 
-  return <div ref={ref}>{count.toLocaleString()}{suffix}</div>
+  return <div>{count.toLocaleString()}{suffix}</div>
 }
 
 export default function Home() {
@@ -43,28 +39,33 @@ export default function Home() {
 
   const t = (key: string) => translate(locale, key)
 
-  // Live market data state
-  const [signals, setSignals] = useState([
-    { pair: "EUR/USD", direction: "BUY", entry: "1.08500", tp: "1.09200", sl: "1.08100", profit: "+0.64%", status: "TP Hit", time: "10:30 AM" },
-    { pair: "XAU/USD", direction: "BUY", entry: "2345.00", tp: "2375.00", sl: "2330.00", profit: "+1.28%", status: "TP Hit", time: "09:45 AM" },
-    { pair: "GBP/JPY", direction: "SELL", entry: "188.500", tp: "187.800", sl: "189.100", profit: "+0.37%", status: "Running", time: "11:15 AM" },
-  ])
-  const [marketData, setMarketData] = useState([
-    { symbol: "GOLD", price: "2,435.50", change: "+0.24%", up: true },
-    { symbol: "TSLA", price: "363.60", change: "+0.17%", up: true },
-    { symbol: "NVDA", price: "218.04", change: "+0.18%", up: true },
-    { symbol: "AAPL", price: "316.52", change: "+0.16%", up: true },
-    { symbol: "GOOGL", price: "337.49", change: "+0.21%", up: true },
-    { symbol: "EUR/USD", price: "1.0850", change: "+0.08%", up: true },
-    { symbol: "GBP/USD", price: "1.2720", change: "+0.12%", up: true },
-    { symbol: "BTC/USD", price: "67,850", change: "+0.19%", up: true },
-    { symbol: "USD/JPY", price: "149.85", change: "-0.15%", up: false },
-    { symbol: "AMZN", price: "192.40", change: "+0.29%", up: true },
-    { symbol: "MSFT", price: "445.30", change: "+0.12%", up: true },
-    { symbol: "ETH/USD", price: "3,450", change: "+0.44%", up: true },
-    { symbol: "USD/CHF", price: "0.8750", change: "-0.11%", up: false },
-    { symbol: "AUD/USD", price: "0.6520", change: "+0.15%", up: true },
-  ])
+  const handleCheckout = async (product: string) => {
+    // Real session check — server theke user ane, na thakle register e pathao
+    try {
+      const me = await fetch("/api/auth").then(r => r.json());
+      const email = me?.user?.email;
+      if (!me.ok || !email) { window.location.href = "/register"; return; }
+      const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ product, email }) });
+      const j = await res.json();
+      if (j.mock) {
+        // mock unlock - store plan locally
+        localStorage.setItem("tokmat_plan", product);
+        const toast = document.createElement("div");
+        toast.textContent = "Mock checkout success! Plan: " + product + " (add LemonSqueezy keys for real payment)";
+        toast.className = "fixed bottom-6 right-6 bg-green-600 text-white px-5 py-3 rounded-xl shadow-xl z-50 text-sm font-bold";
+        document.body.appendChild(toast);
+        setTimeout(()=>{ toast.remove(); window.location.href = j.url || "/dashboard"; }, 1200);
+        return;
+      }
+      if (j.url) window.location.href = j.url;
+    } catch {
+      window.location.href = "/register";
+    }
+  }
+
+  // Live market data state — SHURU TE KHALI (kokhono mock price dekhabe na, API theke real asbe)
+  const [signals, setSignals] = useState<any[]>([])
+  const [marketData, setMarketData] = useState<any[]>([])
 
   // Fetch live market data + signals from API
   useEffect(() => {
@@ -98,15 +99,27 @@ export default function Home() {
   return (
     <main className={`min-h-screen ${isDark ? "bg-dark-950" : "bg-white"}`}>
       {/* ===== Hero Section ===== */}
-      <section className="hero-bg relative min-h-[90vh] flex items-center pt-0 noise-overlay">
+      <section className="hero-bg relative min-h-[92vh] flex items-center -mt-20 noise-overlay">
         <div className="absolute top-32 left-[5%] w-20 h-20 border border-blue-500/10 rounded-2xl rotate-12 animate-float opacity-40"></div>
         <div className="absolute top-48 right-[10%] w-16 h-16 border border-green-500/10 rounded-xl -rotate-6 animate-float opacity-30" style={{animationDelay: "1s"}}></div>
         <div className="absolute bottom-32 left-[15%] w-24 h-24 border border-purple-500/10 rounded-3xl rotate-45 animate-float opacity-20" style={{animationDelay: "2s"}}></div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-24">
+          {/* Join Telegram + YouTube Buttons - Top Center */}
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-12 sm:gap-40 mb-8 sm:-translate-x-8">
+            <a href="https://t.me/TokmatSignal" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all duration-300 border border-white/20">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+              {t("joinTelegram")}
+            </a>
+            <span className="hidden sm:inline text-white/30 text-sm">|</span>
+            <a href="https://youtube.com/@tokmatsecreteducational?si=XGfM-dXS66D40dEy" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-2xl shadow-red-500/30 hover:shadow-red-500/50 hover:scale-105 transition-all duration-300 border border-white/20">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              {t("joinYouTube")}
+            </a>
+          </div>
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left Content */}
-            <div className={`transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}>
+            <div className="animate-fade-in-up">
               <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-4 py-2 mb-8">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -125,12 +138,12 @@ export default function Home() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                <a href="/register" className="btn-accent !rounded-xl text-center">
+                <Link href="/register" className="btn-accent !rounded-xl text-center">
                   {t("getStarted")}
                   <svg className="inline w-5 h-5 ml-2 -mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
-                </a>
+                </Link>
                 <a href="#features" className="btn-outline !rounded-xl text-center">
                   <svg className="inline w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
@@ -153,18 +166,41 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right - CTA */}
-            <div className={`transition-all duration-1000 delay-300 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"} flex items-center justify-center`}>
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-10 text-center max-w-md w-full">
-                <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">{t("ctaTitle")}</h2>
-                <p className="text-blue-200/70 text-lg mb-8">{t("ctaDesc")}</p>
-                <a href="/register" className="inline-flex items-center gap-2 bg-white text-blue-700 font-bold px-8 py-4 rounded-xl text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-xl">
-                  {t("joinNow")}
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </a>
+            {/* Right - 2x2 Video Section */}
+            <div className="animate-fade-in-up" style={{animationDelay: "0.3s"}}>
+              <h3 className="text-2xl md:text-3xl font-extrabold text-white mb-5 text-center">{t("videoSectionTitle")}</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { id: 1, title: "Forex Basics", img: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=220&fit=crop", dur: "12:30" },
+                  { id: 2, title: "Technical Analysis", img: "https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=400&h=220&fit=crop", dur: "18:45" },
+                  { id: 3, title: "Risk Management", img: "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?w=400&h=220&fit=crop", dur: "09:20" },
+                  { id: 4, title: "Advanced Strategies", img: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400&h=220&fit=crop", dur: "22:10" },
+                ].map((v) => (
+                  <a
+                    key={v.id}
+                    href="/videos"
+                    className="group relative rounded-xl overflow-hidden border border-white/10 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105 text-left"
+                  >
+                    <div className="relative aspect-video overflow-hidden">
+                      <Image src={v.img} alt={v.title} width={400} height={220} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                          <svg className="w-4 h-4 text-gray-900 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                        </div>
+                      </div>
+                      <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded">{v.dur}</span>
+                    </div>
+                    <div className="bg-dark-900/80 backdrop-blur px-3 py-2">
+                      <div className="text-white font-semibold text-xs sm:text-sm truncate">{v.title}</div>
+                    </div>
+                  </a>
+                ))}
               </div>
+              {/* See All Videos Link */}
+              <Link href="/videos" className="block text-center mt-5 text-blue-400 hover:text-blue-300 font-semibold text-sm transition-colors">
+                {t("seeAllVideos")} →
+              </Link>
             </div>
           </div>
         </div>
@@ -179,7 +215,7 @@ export default function Home() {
                 { end: 50000, suffix: "+", label: t("statsTraders"), color: "from-blue-500 to-blue-600", icon: "👥" },
                 { end: 50000, suffix: "+", label: t("statsSignals"), color: "from-green-500 to-emerald-600", icon: "📡" },
                 { end: 85, suffix: "%", label: t("statsWinRate"), color: "from-purple-500 to-purple-600", icon: "🎯" },
-                { end: 30, suffix: "+", label: t("statsCountries"), color: "from-orange-500 to-orange-600", icon: "🌍" },
+                { end: 100, suffix: "+", label: t("statsCountries"), color: "from-orange-500 to-orange-600", icon: "🌍" },
               ].map((stat, i) => (
                 <div key={i} className="text-center group cursor-default">
                   <div className="text-2xl mb-2">{stat.icon}</div>
@@ -199,131 +235,227 @@ export default function Home() {
         <div className="relative">
           <div className="absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none bg-gradient-to-r from-dark-950 to-transparent"></div>
           <div className="absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none bg-gradient-to-l from-dark-950 to-transparent"></div>
-          <div className="flex animate-ticker whitespace-nowrap">
-            {[...Array(2)].map((_, setIdx) => (
-              <div key={setIdx} className="flex items-center gap-10 mr-10">
-                {marketData.map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{item.symbol}</span>
-                    <span className="text-base font-extrabold text-white trading-price">{item.price}</span>
-                    <svg className={`w-4 h-4 ${item.up ? "text-green-400" : "text-red-400"}`} fill="currentColor" viewBox="0 0 20 20">
-                      {item.up ? (
-                        <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                      ) : (
-                        <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      )}
-                    </svg>
-                    <span className={`text-sm font-semibold ${item.up ? "text-green-400" : "text-red-400"}`}>{item.change}</span>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
+          {marketData.length === 0 ? (
+            <div className="flex items-center justify-center py-2">
+              <span className="text-gray-500 text-xs animate-pulse">⏳ Loading live market prices...</span>
+            </div>
+          ) : (
+            <div className="flex animate-ticker whitespace-nowrap w-max">
+              {[...Array(2)].map((_, setIdx) => (
+                <div key={setIdx} className="flex items-center gap-10 mr-10">
+                  {marketData.map((item: any, i: number) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{item.symbol}</span>
+                      <span className="text-base font-extrabold text-white trading-price">{item.price}</span>
+                      <svg className={`w-4 h-4 ${item.up ? "text-green-400" : "text-red-400"}`} fill="currentColor" viewBox="0 0 20 20">
+                        {item.up ? (
+                          <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        ) : (
+                          <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        )}
+                      </svg>
+                      <span className={`text-sm font-semibold ${item.up ? "text-green-400" : "text-red-400"}`}>{item.change}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* ===== Pricing Plans Section ===== */}
-      <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className={`text-3xl md:text-5xl font-extrabold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>{t("seeOurPlans")}</h2>
+      {/* ===== Pricing Plans Section - Premium Redesign ===== */}
+      <section className="py-24 px-4 relative overflow-hidden bg-[#020617]">
+        {/* Background gradients */}
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-700 via-indigo-700 to-purple-800 opacity-95"></div>
+        <div className="absolute inset-0 bg-grid opacity-[0.07]"></div>
+        <div className="absolute -top-32 -left-32 w-[500px] h-[500px] bg-blue-500/30 rounded-full blur-[100px]"></div>
+        <div className="absolute -bottom-32 -right-32 w-[600px] h-[600px] bg-fuchsia-500/20 rounded-full blur-[120px]"></div>
+        
+        <div className="relative max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-5 py-2 mb-5">
+              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+              <span className="text-white/90 text-xs font-bold tracking-widest uppercase">Signal Plans</span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">{t("seeOurPlans")}</h2>
+            <p className="text-white/70 text-sm md:text-base max-w-2xl mx-auto">{t("videoSeparatePayment")}</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
             {/* Free Plan */}
-            <div className={`rounded-2xl overflow-hidden border backdrop-blur-xl transition-all hover:shadow-xl hover:scale-105 ${isDark ? "bg-white/5 border-white/10" : "bg-white/60 border-white/30"}`}>
-              <div className="bg-red-600 text-white text-center py-4">
-                <h3 className="text-2xl font-extrabold">{t("planFree")}</h3>
-              </div>
-              <div className="p-8">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-lg">•</span>
-                    <span className={`text-center flex-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("plan2to4")} {t("planSignalsPerMonth")}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-lg">•</span>
-                    <span className={`text-center flex-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("plan900to1500")} {t("planPointsTarget")}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-lg">•</span>
-                    <span className={`text-center flex-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("planBasicSetup")}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-lg">•</span>
-                    <span className={`text-center flex-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("planAllBrokers")}</span>
-                  </div>
+            <div className="group relative rounded-[24px] bg-white/[0.06] backdrop-blur-xl border border-white/15 p-[1px] hover:border-white/25 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-black/20 flex flex-col">
+              <div className="rounded-[23px] bg-gradient-to-b from-white/[0.08] to-white/[0.02] p-7 flex flex-col h-full">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
                 </div>
-                <a href="/register" className="block w-full mt-8 border-2 border-red-600 text-red-600 font-bold py-3 rounded-full text-center hover:bg-red-600 hover:text-white transition-all">
+                <h3 className="text-xl font-black text-white mb-1">{t("planFree")}</h3>
+                <p className="text-white/50 text-xs font-medium tracking-widest uppercase mb-4">Starter</p>
+                <div className="flex items-baseline gap-1 mb-6">
+                  <span className="text-4xl font-black text-white">$0</span>
+                  <span className="text-white/50 text-sm font-medium">/forever</span>
+                </div>
+                <div className="h-px bg-white/10 mb-6"></div>
+                <ul className="space-y-3.5 mb-8 flex-1">
+                  <li className="flex items-center gap-3 text-sm text-white/85">
+                    <span className="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span><b className="text-white">{t("plan2to4")}</b> {t("planSignalsPerMonth")}</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-white/85">
+                    <span className="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span><b className="text-white">{t("plan900to1500")}</b> {t("planPointsTarget")}</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-white/85">
+                    <span className="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span>{t("planBasicSetup")}</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-white/85">
+                    <span className="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span>{t("planAllBrokers")}</span>
+                  </li>
+                </ul>
+                <Link href="/register" className="w-full block text-center bg-white text-gray-900 font-black py-3.5 rounded-xl hover:bg-gray-100 transition-all duration-300 hover:shadow-lg hover:shadow-white/10 text-sm tracking-wide">
                   {t("joinPlanBtn")}
-                </a>
+                </Link>
+                <p className="text-center text-white/40 text-[11px] mt-3">No credit card required</p>
               </div>
             </div>
 
-            {/* Premium Plan */}
-            <div className={`rounded-2xl overflow-hidden border-2 border-blue-500/50 relative backdrop-blur-xl transition-all hover:shadow-xl hover:shadow-blue-500/20 hover:scale-105 ${isDark ? "bg-blue-500/10" : "bg-blue-50/60"}`}>
-              <span className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">{t("recommended")}</span>
-              <div className="bg-red-600 text-white text-center py-4">
-                <h3 className="text-2xl font-extrabold">{t("planPremium")}</h3>
+            {/* Premium Plan - Featured */}
+            <div className="group relative rounded-[24px] bg-gradient-to-b from-blue-500 to-cyan-500 p-[1.5px] shadow-2xl shadow-blue-600/30 hover:shadow-blue-600/40 transition-all duration-500 hover:-translate-y-2 md:scale-[1.03] md:-mt-2 md:mb-2 flex flex-col">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[11px] font-black tracking-widest px-5 py-1.5 rounded-full shadow-lg shadow-orange-500/25 flex items-center gap-1.5 whitespace-nowrap z-10">
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                {t("recommended")}
               </div>
-              <div className="p-8">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-lg">•</span>
-                    <span className={`text-center flex-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("plan8to14")} {t("planSignalsPerMonth")}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-lg">•</span>
-                    <span className={`text-center flex-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("plan3000to7000")} {t("planPointsTarget")}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-lg">•</span>
-                    <span className={`text-center flex-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("planAccurate")}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-lg">•</span>
-                    <span className={`text-center flex-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("planAllBrokers")}</span>
-                  </div>
+              <div className="rounded-[22px] bg-gradient-to-b from-[#0f172a] via-[#1e293b] to-[#0f172a] p-7 pt-9 flex flex-col h-full relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/15 rounded-full blur-3xl"></div>
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-5 shadow-lg shadow-blue-500/25 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
                 </div>
-                <a href="/register" className="block w-full mt-8 bg-blue-600 text-white font-bold py-3 rounded-full text-center hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">
-                  {t("joinPlanBtn")}
-                </a>
+                <h3 className="text-xl font-black text-white mb-1">{t("planPremium")}</h3>
+                <p className="text-blue-300/70 text-xs font-bold tracking-widest uppercase mb-4">Most Popular</p>
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className="text-4xl font-black text-white">$49</span>
+                  <span className="text-white/50 text-sm font-medium">/month</span>
+                </div>
+                <p className="text-emerald-400 text-xs font-bold mb-6 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span> Save 40% yearly
+                </p>
+                <div className="h-px bg-white/10 mb-6"></div>
+                <ul className="space-y-3.5 mb-8 flex-1">
+                  <li className="flex items-center gap-3 text-sm text-white">
+                    <span className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span><b>{t("plan8to14")}</b> {t("planSignalsPerMonth")}</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-white">
+                    <span className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span><b>{t("plan3000to7000")}</b> {t("planPointsTarget")}</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-white">
+                    <span className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span>{t("planAccurate")} & VIP Support</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-white">
+                    <span className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span>{t("planAllBrokers")}</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-blue-200">
+                    <span className="w-6 h-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span>Live Telegram Alerts</span>
+                  </li>
+                </ul>
+                <button onClick={() => handleCheckout("premium")} className="w-full block text-center bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-black py-3.5 rounded-xl hover:from-blue-700 hover:to-cyan-600 transition-all duration-300 shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 hover:scale-[1.02] text-sm tracking-wide">
+                  {t("joinPlanBtn")} →
+                </button>
+                <p className="text-center text-white/40 text-[11px] mt-3">Cancel anytime • 7-day guarantee</p>
               </div>
             </div>
 
             {/* Supreme Plan */}
-            <div className={`rounded-2xl overflow-hidden border backdrop-blur-xl transition-all hover:shadow-xl hover:scale-105 ${isDark ? "bg-white/5 border-white/10" : "bg-white/60 border-white/30"}`}>
-              <div className="bg-red-600 text-white text-center py-4">
-                <h3 className="text-2xl font-extrabold">{t("planSupreme")}</h3>
-              </div>
-              <div className="p-8">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-lg">•</span>
-                    <span className={`text-center flex-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("plan16to25")} {t("planSignalsPerMonth")}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-lg">•</span>
-                    <span className={`text-center flex-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("plan7000to15000")} {t("planPointsTarget")}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-lg">•</span>
-                    <span className={`text-center flex-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("planAccurate")}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-lg">•</span>
-                    <span className={`text-center flex-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>{t("planAllBrokers")}</span>
-                  </div>
+            <div className="group relative rounded-[24px] bg-white/[0.06] backdrop-blur-xl border border-amber-500/20 p-[1px] hover:border-amber-500/40 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-amber-500/10 flex flex-col">
+              <div className="rounded-[23px] bg-gradient-to-b from-amber-500/[0.08] via-white/[0.03] to-transparent p-7 flex flex-col h-full relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center mb-5 shadow-lg shadow-amber-500/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
                 </div>
-                <a href="/register" className="block w-full mt-8 border-2 border-red-600 text-red-600 font-bold py-3 rounded-full text-center hover:bg-red-600 hover:text-white transition-all">
+                <h3 className="text-xl font-black text-white mb-1">{t("planSupreme")}</h3>
+                <p className="text-amber-300/60 text-xs font-bold tracking-widest uppercase mb-4">For Professionals</p>
+                <div className="flex items-baseline gap-1 mb-6">
+                  <span className="text-4xl font-black text-white">$99</span>
+                  <span className="text-white/50 text-sm font-medium">/month</span>
+                </div>
+                <div className="h-px bg-white/10 mb-6"></div>
+                <ul className="space-y-3.5 mb-8 flex-1">
+                  <li className="flex items-center gap-3 text-sm text-white/90">
+                    <span className="w-6 h-6 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span><b className="text-white">{t("plan16to25")}</b> {t("planSignalsPerMonth")}</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-white/90">
+                    <span className="w-6 h-6 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span><b className="text-white">{t("plan7000to15000")}</b> {t("planPointsTarget")}</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-white/90">
+                    <span className="w-6 h-6 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span>{t("planAccurate")} + 1:1 Mentorship</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-white/90">
+                    <span className="w-6 h-6 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span>{t("planAllBrokers")}</span>
+                  </li>
+                </ul>
+                <button onClick={() => handleCheckout("supreme")} className="w-full block text-center bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black py-3.5 rounded-xl hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 hover:scale-[1.02] text-sm tracking-wide">
                   {t("joinPlanBtn")}
-                </a>
+                </button>
+                <p className="text-center text-white/40 text-[11px] mt-3">Best value for serious traders</p>
               </div>
             </div>
           </div>
+
+          {/* Bottom trust row */}
+          <div className="mt-10 flex flex-wrap justify-center items-center gap-6 text-white/50 text-xs">
+            <span className="flex items-center gap-2"><svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg> Secure Payment</span>
+            <span className="w-1 h-1 bg-white/20 rounded-full"></span>
+            <span className="flex items-center gap-2"><svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> Instant Access</span>
+            <span className="w-1 h-1 bg-white/20 rounded-full"></span>
+            <span className="flex items-center gap-2"><svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> 24/7 Support</span>
+          </div>
         </div>
       </section>
-
-      {/* ===== Limited Offer Countdown Banner ===== */}
+      
+      {/* ===== Limited Offer Countdown Banner ===== */}      {/* ===== Limited Offer Countdown Banner ===== */}
       <section className="py-8 px-4">
         <div className="max-w-6xl mx-auto">
           <div className={`rounded-2xl overflow-hidden border backdrop-blur-xl transition-all hover:shadow-xl ${isDark ? "bg-white/5 border-white/10" : "bg-white/60 border-white/30"}`}>
@@ -357,9 +489,9 @@ export default function Home() {
                   <div className={`text-3xl font-extrabold ${isDark ? "text-white" : "text-gray-900"}`}>52</div>
                   <div className={`text-xs uppercase ${isDark ? "text-gray-500" : "text-gray-400"}`}>Secs</div>
                 </div>
-                <a href="/register" className="ml-4 bg-red-600 text-white font-bold px-6 py-3 rounded-full hover:bg-red-700 transition-all shadow-lg shadow-red-500/20">
+                <Link href="/register" className="ml-4 bg-red-600 text-white font-bold px-6 py-3 rounded-full hover:bg-red-700 transition-all shadow-lg shadow-red-500/20">
                   {t("joinNow")}
-                </a>
+                </Link>
               </div>
             </div>
           </div>
@@ -415,7 +547,10 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 max-w-4xl mx-auto items-center">
-            {signals.map((signal, i) => (
+            {signals.length === 0 && (
+              <div className="col-span-full text-center py-6 text-gray-500 text-xs animate-pulse">⏳ Fetching live signals...</div>
+            )}
+            {signals.map((signal: any, i: number) => (
               <div key={i} className={`w-full bg-white/5 backdrop-blur-xl border rounded-lg p-2.5 sm:p-4 transition-all duration-500 ${signal.pair === "XAU/USD" ? "border-yellow-500/30 hover:shadow-yellow-500/10 hover:shadow-2xl hover:border-yellow-500/50 md:scale-105" : "border-white/10 hover:border-green-500/30 hover:shadow-green-500/10 hover:shadow-xl"}`}>
                 {/* Header */}
                 <div className="flex items-center justify-between mb-2">
@@ -510,13 +645,13 @@ export default function Home() {
           <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4">{t("ctaTitle")}</h2>
           <p className="text-blue-200 text-lg mb-8 max-w-xl mx-auto">{t("ctaDesc")}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/register" className="inline-flex items-center justify-center gap-2 bg-white text-blue-700 font-bold px-8 py-4 rounded-xl text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-xl">
+            <Link href="/register" className="inline-flex items-center justify-center gap-2 bg-white text-blue-700 font-bold px-8 py-4 rounded-xl text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-xl">
               {t("joinNow")}
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-            </a>
-            <a href="/results" className="inline-flex items-center justify-center gap-2 bg-white/10 border border-white/30 text-white font-bold px-8 py-4 rounded-xl text-lg hover:bg-white/20 transition-all">
+            </Link>
+            <Link href="/results" className="inline-flex items-center justify-center gap-2 bg-white/10 border border-white/30 text-white font-bold px-8 py-4 rounded-xl text-lg hover:bg-white/20 transition-all">
               {t("viewResults")}
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -568,10 +703,10 @@ export default function Home() {
             <div>
               <h4 className="text-white font-semibold mb-4">{t("footerConnect")}</h4>
               <div className="flex items-center gap-3">
-                <a href="https://t.me/tokmatacademy" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-dark-800 flex items-center justify-center hover:bg-blue-600 transition-colors group">
+                <a href="https://t.me/TokmatSignal" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-dark-800 flex items-center justify-center hover:bg-blue-600 transition-colors group">
                   <svg className="w-5 h-5 text-gray-400 group-hover:text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121L8.32 13.617l-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.94z"/></svg>
                 </a>
-                <a href="https://www.youtube.com/@tokmatacademy" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-dark-800 flex items-center justify-center hover:bg-red-600 transition-colors group">
+                <a href="https://youtube.com/@tokmatsecreteducational?si=XGfM-dXS66D40dEy" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-dark-800 flex items-center justify-center hover:bg-red-600 transition-colors group">
                   <svg className="w-5 h-5 text-gray-400 group-hover:text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                 </a>
               </div>

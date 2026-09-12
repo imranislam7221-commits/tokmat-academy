@@ -27,21 +27,38 @@ const FOREX_PAIRS = [
   { base: "USD", quote: "AUD", label: "AUD/USD", decimals: 5 },
 ];
 
-// Gold price - using frankfurter or fallback
+// Gold price - free gold-api.com with fallback
 async function fetchGoldPrice() {
   try {
-    // Try Frankfurter for XAU/USD proxy (EUR as base for gold conversion)
-    const res = await fetch(
-      `https://api.frankfurter.app/latest?from=XAU&to=USD`,
-      { next: { revalidate: 60 } }
-    );
+    const res = await fetch("https://api.gold-api.com/price/XAU", { next: { revalidate: 60 } });
     if (res.ok) {
       const data = await res.json();
-      if (data.rates?.USD) return data.rates.USD;
+      if (data.price) return Number(data.price);
     }
   } catch {}
-  // Fallback: approximate gold price
-  return 2345.00;
+  return null;
+}
+
+// Gold previous close (Yahoo Gold Futures GC=F) — REAL change% er jonno
+async function fetchGoldPrevClose(): Promise<number | null> {
+  try {
+    const res = await fetch("https://query1.finance.yahoo.com/v8/finance/chart/GC=F?range=5d&interval=1d", {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+      next: { revalidate: 300 },
+    });
+    if (res.ok) {
+      const d = await res.json();
+      const meta = d?.chart?.result?.[0]?.meta;
+      if (meta?.chartPreviousClose) return Number(meta.chartPreviousClose);
+    }
+  } catch {}
+  return null;
+}
+
+// Percentage change helper
+function pctChange(current: number, prev: number | null | undefined): number {
+  if (!prev || !isFinite(prev) || prev === 0 || !isFinite(current)) return 0;
+  return ((current - prev) / prev) * 100;
 }
 
 async function fetchForexRates() {
@@ -52,7 +69,22 @@ async function fetchForexRates() {
     );
     if (res.ok) {
       const data = await res.json();
-      return data.rates || {};
+      return data; // { rates, date }
+    }
+  } catch {}
+  return null;
+}
+
+// Historical rates (previous business day) — REAL change% er jonno
+async function fetchForexHistorical(dateStr: string) {
+  try {
+    const res = await fetch(
+      `https://api.frankfurter.app/${dateStr}?from=USD&to=EUR,GBP,JPY,CHF,AUD`,
+      { next: { revalidate: 3600 } }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      return data.rates || null;
     }
   } catch {}
   return null;
@@ -80,7 +112,19 @@ async function fetchFinnhubQuote(symbol: string) {
   }
 }
 
-function generateSignal(pair: { label: string; type: string }, price: number) {
+async function getPersistedSignals(): Promise<any[] | null> {
+  try {
+    const fs = await import("fs/promises");
+    const path = await import("path");
+    const file = path.join(process.cwd(), "data", "signals.json");
+    const raw = await fs.readFile(file, "utf-8");
+    const arr = JSON.parse(raw);
+    if (Array.isArray(arr) && arr.length > 0) return arr.slice(0, 6);
+  } catch {}
+  return null;
+}
+
+function generateSignal(label: string, price: number) {
   const isBuy = Math.random() > 0.35;
   const tpPercent = 0.005 + Math.random() * 0.008;
   const slPercent = 0.003 + Math.random() * 0.005;
@@ -89,10 +133,10 @@ function generateSignal(pair: { label: string; type: string }, price: number) {
   const sl = isBuy ? entry * (1 - slPercent) : entry * (1 + slPercent);
   const profitPercent = 0.2 + Math.random() * 2.0;
   const status = profitPercent > 1.0 ? "TP Hit" : "Running";
-  const decimals = pair.type === "forex" ? 5 : 2;
-
+  // JPY pairs 3 decimals, gold 2, onnano 5
+  const decimals = label.includes("JPY") ? 3 : label.includes("XAU") || label.includes("GOLD") ? 2 : 5;
   return {
-    pair: pair.label,
+    pair: label,
     direction: isBuy ? "BUY" : "SELL",
     entry: entry.toFixed(decimals),
     tp: tp.toFixed(decimals),
@@ -120,21 +164,39 @@ export async function GET() {
       }))
     );
 
-    // Fetch forex from Frankfurter
-    const forexRates = await fetchForexRates();
+    // Fetch forex from Frankfurter (latest + previous day for real change)
+    const forexData = await fetchForexRates();
+    const forexRates = forexData ? forexData.rates : null;
 
-    // Fetch gold
-    const goldPrice = await fetchGoldPrice();
+    // Previous business day rate for real change%
+    let prevRates: any = null;
+    if (forexData?.date) {
+      const [y, m, d] = String(forexData.date).split("-").map(Number);
+      const prevDate = new Date(Date.UTC(y, m - 1, d));
+      prevDate.setUTCDate(prevDate.getUTCDate() - 1);
+      // Skip weekend (Sat/Sun)
+      const day = prevDate.getUTCDay();
+      if (day === 0) prevDate.setUTCDate(prevDate.getUTCDate() - 2);
+      else if (day === 6) prevDate.setUTCDate(prevDate.getUTCDate() - 1);
+      prevRates = await fetchForexHistorical(
+        `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, "0")}-${String(prevDate.getUTCDate()).padStart(2, "0")}`
+      );
+    }
+
+    // Fetch gold (price + prev close for real change)
+    const [goldPrice, goldPrev] = await Promise.all([fetchGoldPrice(), fetchGoldPrevClose()]);
 
     // Build ticker
     const ticker = [];
 
-    // Gold
+    // Gold — real price + real change from Yahoo prev close
+    const gold = goldPrice ?? 0;
+    const goldPct = pctChange(gold, goldPrev);
     ticker.push({
       symbol: "GOLD",
-      price: goldPrice.toFixed(2),
-      change: "+0.15%",
-      up: true,
+      price: gold ? gold.toFixed(2) : "N/A",
+      change: `${goldPct >= 0 ? "+" : ""}${goldPct.toFixed(2)}%`,
+      up: goldPct >= 0,
     });
 
     // Stocks
@@ -151,22 +213,28 @@ export async function GET() {
       }
     }
 
-    // Forex
+    // Forex — real price + real change (vs previous business day)
     if (forexRates) {
-      // EUR/USD: if 1 USD = 0.92 EUR, then 1 EUR = 1/0.92 USD
-      const eurUsd = forexRates.EUR ? (1 / forexRates.EUR) : 0;
-      const gbpUsd = forexRates.GBP ? (1 / forexRates.GBP) : 0;
-      const usdJpy = forexRates.JPY || 0;
-      const usdChf = forexRates.CHF || 0;
-      const audUsd = forexRates.AUD ? (1 / forexRates.AUD) : 0;
-
-      ticker.push(
-        { symbol: "EUR/USD", price: eurUsd.toFixed(5), change: "+0.03%", up: true },
-        { symbol: "GBP/USD", price: gbpUsd.toFixed(5), change: "-0.02%", up: false },
-        { symbol: "USD/JPY", price: usdJpy.toFixed(3), change: "+0.11%", up: true },
-        { symbol: "USD/CHF", price: usdChf.toFixed(5), change: "-0.01%", up: false },
-        { symbol: "AUD/USD", price: audUsd.toFixed(5), change: "+0.04%", up: true }
-      );
+      const pairs = [
+        { symbol: "EUR/USD", rate: forexRates.EUR, prev: prevRates?.EUR, inv: true, decimals: 5 },
+        { symbol: "GBP/USD", rate: forexRates.GBP, prev: prevRates?.GBP, inv: true, decimals: 5 },
+        { symbol: "USD/JPY", rate: forexRates.JPY, prev: prevRates?.JPY, inv: false, decimals: 3 },
+        { symbol: "USD/CHF", rate: forexRates.CHF, prev: prevRates?.CHF, inv: false, decimals: 5 },
+        { symbol: "AUD/USD", rate: forexRates.AUD, prev: prevRates?.AUD, inv: true, decimals: 5 },
+      ];
+      for (const p of pairs) {
+        if (!p.rate) continue;
+        // inv=true mane USD-base rate ke price-base e ulte hobe (EUR/USD = 1/EUR rate)
+        const cur = p.inv ? 1 / p.rate : p.rate;
+        const prev = p.prev ? (p.inv ? 1 / p.prev : p.prev) : null;
+        const chg = pctChange(cur, prev);
+        ticker.push({
+          symbol: p.symbol,
+          price: cur.toFixed(p.decimals),
+          change: `${chg >= 0 ? "+" : ""}${chg.toFixed(2)}%`,
+          up: chg >= 0,
+        });
+      }
     }
 
     // Crypto
@@ -183,15 +251,18 @@ export async function GET() {
       }
     }
 
-    // Build signals (gold + eur + gbp)
-    const eurUsd = forexRates?.EUR ? (1 / forexRates.EUR) : 1.085;
-    const gbpJpy = forexRates?.JPY && forexRates?.GBP ? forexRates.JPY / forexRates.GBP : 188.5;
-
-    const signals = [
-      generateSignal({ label: "XAU/USD", type: "commodity" }, goldPrice),
-      generateSignal({ label: "EUR/USD", type: "forex" }, eurUsd),
-      generateSignal({ label: "GBP/JPY", type: "forex" }, gbpJpy),
-    ];
+    // Admin-posted signals prefer hoy (data/signals.json); na thakle live price theke fresh generate
+    const persisted = await getPersistedSignals();
+    let signals: any[];
+    if (persisted) {
+      signals = persisted;
+    } else {
+      const liveSignals: any[] = [];
+      if (gold) liveSignals.push(generateSignal("XAU/USD", gold));
+      if (forexRates?.EUR) liveSignals.push(generateSignal("EUR/USD", 1 / forexRates.EUR));
+      if (forexRates?.JPY && forexRates?.GBP) liveSignals.push(generateSignal("GBP/JPY", forexRates.JPY / forexRates.GBP));
+      signals = liveSignals;
+    }
 
     return NextResponse.json({ fallback: false, signals, ticker, source: "finnhub+frankfurter" });
   } catch {

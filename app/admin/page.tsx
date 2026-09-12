@@ -4,19 +4,14 @@ import { useState, useEffect } from "react"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
 
-const demoUsers = [
-  { id: 1, name: "Imran Khan", email: "imran@gmail.com", plan: "Free", status: "Active", joinDate: "Jan 15, 2024", balance: "$12,450" },
-  { id: 2, name: "Sarah Ahmed", email: "sarah@gmail.com", plan: "Premium", status: "Active", joinDate: "Feb 3, 2024", balance: "$28,900" },
-  { id: 3, name: "Ali Hassan", email: "ali@gmail.com", plan: "Free", status: "Suspended", joinDate: "Mar 22, 2024", balance: "$5,200" },
-  { id: 4, name: "Maria Santos", email: "maria@gmail.com", plan: "Premium", status: "Active", joinDate: "Apr 10, 2024", balance: "$45,600" },
-  { id: 5, name: "James Wilson", email: "james@gmail.com", plan: "Free", status: "Active", joinDate: "May 5, 2024", balance: "$8,750" },
-]
+const demoUsers: any[] = [] // real users DB theke ase — demo list removed
 
 const demoSignals = [
   { id: 1, pair: "EUR/USD", direction: "BUY", entry: "1.0850", tp: "1.0920", sl: "1.0810", posted: "2h ago" },
   { id: 2, pair: "GBP/JPY", direction: "SELL", entry: "188.500", tp: "187.800", sl: "189.100", posted: "5h ago" },
   { id: 3, pair: "XAU/USD", direction: "BUY", entry: "2345.00", tp: "2375.00", sl: "2330.00", posted: "1d ago" },
 ]
+
 
 export default function AdminDashboard() {
   const { theme } = useTheme()
@@ -26,11 +21,22 @@ export default function AdminDashboard() {
   const [showNewSignal, setShowNewSignal] = useState(false)
   const [newSignal, setNewSignal] = useState({ pair: "", direction: "BUY", entry: "", tp: "", sl: "" })
   const [mounted, setMounted] = useState(false)
+  const [liveSignals, setLiveSignals] = useState<any[]>(demoSignals)
 
   useEffect(() => {
     setMounted(true)
     const params = new URLSearchParams(window.location.search)
     setLocale((params.get("locale") || "en") as Locale)
+    fetch("/api/signals").then(r=>r.json()).then(j=>{ if(Array.isArray(j.signals)) setLiveSignals(j.signals.map((s:any,i:number)=>({ id:s.id||i, pair:s.pair, direction:s.direction, entry:s.entry, tp:s.tp, sl:s.sl, posted:s.time||"now"}))) }).catch(()=>{})
+  }, [])  // Admin guard: only real admin session can access
+  useEffect(() => {
+    fetch("/api/auth")
+      .then(r => r.json())
+      .then(j => {
+        if (!j.ok || !j.user) { window.location.href = "/login"; return; }
+        if (j.user.role !== "admin") { window.location.href = "/dashboard"; }
+      })
+      .catch(() => { window.location.href = "/login"; })
   }, [])
 
   if (!mounted) return null
@@ -45,11 +51,48 @@ export default function AdminDashboard() {
     { id: "settings" as const, label: t("settings"), icon: "⚙️" },
   ]
 
-  const handlePostSignal = () => {
+  // Real users list from database
+  const [dbUsers, setDbUsers] = useState<any[]>([])
+  const [usersLoading, setUsersLoading] = useState(true)
+
+  useEffect(() => {
+    if (activeSection !== "users") return
+    setUsersLoading(true)
+    fetch("/api/users")
+      .then(r => r.json())
+      .then(j => { if (j.ok) setDbUsers(j.users || []); setUsersLoading(false) })
+      .catch(() => setUsersLoading(false))
+  }, [activeSection])
+
+  const toggleSuspend = async (userId: number) => {
+    try {
+      const res = await fetch("/api/users", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId }) })
+      if (res.ok) {
+        setDbUsers((prev: any[]) => prev.map((u: any) => u.id === userId ? { ...u, status: u.status === "Active" ? "Suspended" : "Active" } : u))
+      }
+    } catch {}
+  }
+
+  const [posting, setPosting] = useState(false)
+  const handlePostSignal = async () => {
     if (!newSignal.pair || !newSignal.entry) return
-    alert(`${t("signalPosted")} ${newSignal.direction} ${newSignal.pair} @ ${newSignal.entry}`)
-    setNewSignal({ pair: "", direction: "BUY", entry: "", tp: "", sl: "" })
-    setShowNewSignal(false)
+    setPosting(true)
+    try {
+      const res = await fetch("/api/signals", { method:"POST", headers:{ "Content-Type":"application/json"}, body: JSON.stringify({ pair:newSignal.pair, direction:newSignal.direction, entry:newSignal.entry, tp:newSignal.tp || newSignal.entry, sl:newSignal.sl || newSignal.entry }) })
+      if (res.ok) {
+        const j = await res.json()
+        // optimistic feedback
+        const msg = j.signal ? `${t("signalPosted")} ${j.signal.direction} ${j.signal.pair} @ ${j.signal.entry}` : t("signalPosted")
+        // use custom toast instead of alert
+        const el = document.createElement("div")
+        el.textContent = msg
+        el.className = "fixed bottom-6 right-6 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm font-bold"
+        document.body.appendChild(el)
+        setTimeout(()=>el.remove(), 2500)
+        setNewSignal({ pair: "", direction: "BUY", entry: "", tp: "", sl: "" })
+        setShowNewSignal(false)
+      }
+    } catch {} finally { setPosting(false) }
   }
 
   return (
@@ -68,7 +111,7 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-3">
             <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t("masterAdmin")}</span>
-            <a href="/" className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">{t("logout")}</a>
+            <button onClick={async () => { try { await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }) }) } catch {}; window.location.href="/login"; }} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">{t("logout")}</button>
           </div>
         </div>
       </nav>
@@ -156,32 +199,41 @@ export default function AdminDashboard() {
                   <table className="w-full">
                     <thead>
                       <tr className={isDark ? "bg-dark-700" : "bg-gray-50"}>
-                        {["User", "Email", "Plan", "Status", "Balance", t("edit")].map((h) => (
+                        {["User", "Email", "Role", "Plan", "Joined", "Status", t("edit")].map((h) => (
                           <th key={h} className={`text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider ${isDark ? "text-gray-400" : "text-gray-500"}`}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${isDark ? "divide-dark-700" : "divide-gray-100"}`}>
-                      {demoUsers.map((user) => (
+                      {dbUsers.length === 0 && !usersLoading && (
+                        <tr><td colSpan={6} className={`px-6 py-8 text-center text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>No registered users yet. Share the register link to get users!</td></tr>
+                      )}
+                      {usersLoading && (
+                        <tr><td colSpan={6} className={`px-6 py-8 text-center text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}><span className="animate-spin inline-block w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></span> Loading users...</td></tr>
+                      )}
+                      {dbUsers.map((user: any) => (
                         <tr key={user.id} className={`transition-colors ${isDark ? "hover:bg-dark-700/50" : "hover:bg-gray-50"}`}>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold">{user.name.charAt(0)}</div>
-                              <span className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-900"}`}>{user.name}</span>
+                              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold">{(user.firstName || user.email || "U").charAt(0).toUpperCase()}</div>
+                              <span className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-900"}`}>{[user.firstName, user.lastName].filter(Boolean).join(" ") || "—"}</span>
                             </div>
                           </td>
                           <td className={`px-6 py-4 text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>{user.email}</td>
+                          <td className={`px-6 py-4 text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>{user.role === "admin" ? "👑 Admin" : "👤 User"}</td>
                           <td className="px-6 py-4">
                             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${user.plan === "Premium" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-600"}`}>{user.plan}</span>
                           </td>
+                          <td className={`px-6 py-4 text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>{user.joined ? new Date(user.joined).toLocaleDateString() : "—"}</td>
                           <td className="px-6 py-4">
                             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${user.status === "Active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{user.status}</span>
                           </td>
                           <td className={`px-6 py-4 text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{user.balance}</td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
-                              <button className="text-blue-500 hover:text-blue-600 text-xs font-medium">{t("edit")}</button>
-                              <button className="text-red-500 hover:text-red-600 text-xs font-medium">{t("suspend")}</button>
+                              <button onClick={() => toggleSuspend(user.id)} className={`${user.status === "Suspended" ? "text-green-500 hover:text-green-600" : "text-red-500 hover:text-red-600"} text-xs font-medium`}>
+                                {user.status === "Suspended" ? "Activate" : t("suspend")}
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -225,7 +277,7 @@ export default function AdminDashboard() {
 
                 {/* Signal List */}
                 <div className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl overflow-hidden`}>
-                  {demoSignals.map((signal, i) => (
+                  {liveSignals.map((signal, i) => (
                     <div key={i} className={`flex items-center justify-between p-4 ${i < demoSignals.length - 1 ? (isDark ? "border-b border-dark-700" : "border-b border-gray-100") : ""}`}>
                       <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-sm font-bold ${signal.direction === "BUY" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
@@ -277,7 +329,7 @@ export default function AdminDashboard() {
                 {[
                   { title: t("siteName"), value: "Tokmat Academy", type: "text" },
                   { title: t("supportEmail"), value: "support@tokmatacademy.com", type: "email" },
-                  { title: t("telegramLink"), value: "https://t.me/tokmatacademy", type: "text" },
+                  { title: t("telegramLink"), value: "https://t.me/TokmatSignal", type: "text" },
                   { title: t("maxFreeSignals"), value: "3", type: "number" },
                 ].map((setting, i) => (
                   <div key={i} className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-xl p-4 flex items-center justify-between`}>

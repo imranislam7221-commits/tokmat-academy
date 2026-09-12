@@ -26,7 +26,7 @@ export default function ContactPage() {
             <div className={`rounded-xl p-6 border ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"}`}>
               <h3 className={`font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>{t("getInTouch")}</h3>
               <div className="space-y-4">
-                <a href="https://t.me/tokmatacademy" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isDark ? "bg-blue-900/20 hover:bg-blue-900/30" : "bg-blue-50 hover:bg-blue-100"}`}>
+                <a href="https://t.me/TokmatSignal" target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isDark ? "bg-blue-900/20 hover:bg-blue-900/30" : "bg-blue-50 hover:bg-blue-100"}`}>
                   <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121L8.32 13.617l-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.94z"/></svg>
                   <div>
                     <div className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>Telegram</div>
