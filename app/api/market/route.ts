@@ -94,7 +94,7 @@ async function fetchFinnhubQuote(symbol: string) {
   try {
     const res = await fetch(
       `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_KEY}`,
-      { next: { revalidate: 30 } }
+      { next: { revalidate: 60 } }
     );
     if (!res.ok) return null;
     const data = await res.json();
@@ -264,8 +264,8 @@ export async function GET() {
       signals = liveSignals;
     }
 
-    return NextResponse.json({ fallback: false, signals, ticker, source: "finnhub+frankfurter" });
+    return NextResponse.json({ fallback: false, signals, ticker, source: "finnhub+frankfurter" }, { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=30" } });
   } catch {
-    return NextResponse.json({ fallback: true, signals: [], ticker: [], source: "mock" });
+    return NextResponse.json({ fallback: true, signals: [], ticker: [], source: "mock" }, { headers: { "Cache-Control": "no-store" } });
   }
 }

@@ -86,7 +86,7 @@ export default function Home() {
       }
     }
     fetchMarket()
-    const interval = setInterval(fetchMarket, 30000)
+    const interval = setInterval(fetchMarket, 60000)
     return () => clearInterval(interval)
   }, [])
 
