@@ -65,7 +65,7 @@ export function Header({ locale: initialLocale }: { locale: string }) {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
+        scrolled || mobileOpen
           ? isDark
             ? "bg-dark-900/95 backdrop-blur-xl shadow-elevated border-b border-dark-700"
             : "bg-white/95 backdrop-blur-xl shadow-elevated border-b border-gray-100"
@@ -209,7 +209,7 @@ export function Header({ locale: initialLocale }: { locale: string }) {
 
         {/* Mobile Nav */}
         {mobileOpen && (
-          <div className={`xl:hidden border-t py-4 animate-fade-in ${isDark ? "border-dark-700" : "border-gray-100"}`}>
+          <div className={`xl:hidden border-t py-4 animate-fade-in shadow-lg ${isDark ? "bg-dark-900 border-dark-700" : "bg-white border-gray-100"}`}>
             <div className="flex flex-col gap-1">
               {navigationLinks.map((link) => (
                 <Link
