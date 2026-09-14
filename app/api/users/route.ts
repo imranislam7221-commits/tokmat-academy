@@ -2,20 +2,24 @@ import { NextResponse } from "next/server";
 import { pool, initDb } from "@/lib/db";
 import { getUserByToken, COOKIE_NAME } from "../auth/route";
 
-async function requireAdmin(req: Request): Promise<boolean> {
+const MASTER_ADMIN = "maasum1231@gmail.com";
+
+async function requireAdmin(req: Request): Promise<{ ok: boolean; user?: any }> {
   const cookie = req.headers.get("cookie") || "";
   const match = cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
-  if (!match) return false;
+  if (!match) return { ok: false };
   try {
     const user = await getUserByToken(match[1]);
-    return !!user && user.role === "admin";
+    if (!user || user.role !== "admin") return { ok: false };
+    return { ok: true, user };
   } catch {
-    return false;
+    return { ok: false };
   }
 }
 
 export async function GET(req: Request) {
-  if (!(await requireAdmin(req))) {
+  const auth = await requireAdmin(req);
+  if (!auth.ok) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
   try {
@@ -44,16 +48,28 @@ export async function GET(req: Request) {
 
 // Suspend / Activate user
 export async function PATCH(req: Request) {
-  if (!(await requireAdmin(req))) {
+  const auth = await requireAdmin(req);
+  if (!auth.ok) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
   try {
     const { userId } = await req.json();
     if (!userId) return NextResponse.json({ ok: false, error: "userId required" }, { status: 400 });
     await initDb();
+    const targetRes = await pool.query(`SELECT id, email, role FROM users WHERE id = $1`, [userId]);
+    const target = targetRes.rows[0];
+    if (!target) return NextResponse.json({ ok: false, error: "User not found" }, { status: 404 });
+    const isMasterRequester = auth.user.email.toLowerCase() === MASTER_ADMIN;
+    const isMasterTarget = target.email.toLowerCase() === MASTER_ADMIN;
+    // Master ke keu suspend korte parbe na
+    if (isMasterTarget) return NextResponse.json({ ok: false, error: "Cannot suspend master admin" }, { status: 403 });
+    // Co-admin ra onno admin ke suspend korte parbe na, sudhu user ke
+    if (!isMasterRequester && target.role === "admin") {
+      return NextResponse.json({ ok: false, error: "Only master can suspend admins" }, { status: 403 });
+    }
     // Toggle status
     await pool.query(
-      `UPDATE users SET status = CASE WHEN status = 'Active' THEN 'Suspended' ELSE 'Active' END WHERE id = $1 AND role != 'admin'`,
+      `UPDATE users SET status = CASE WHEN status = 'Active' THEN 'Suspended' ELSE 'Active' END WHERE id = $1`,
       [userId]
     );
     // Suspended user er session revoke kori

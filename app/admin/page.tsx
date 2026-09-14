@@ -29,12 +29,15 @@ export default function AdminDashboard() {
     setLocale((params.get("locale") || "en") as Locale)
     fetch("/api/signals").then(r=>r.json()).then(j=>{ if(Array.isArray(j.signals)) setLiveSignals(j.signals.map((s:any,i:number)=>({ id:s.id||i, pair:s.pair, direction:s.direction, entry:s.entry, tp:s.tp, sl:s.sl, posted:s.time||"now"}))) }).catch(()=>{})
   }, [])  // Admin guard: only real admin session can access
+  const [currentAdmin, setCurrentAdmin] = useState<any>(null)
+  const MASTER_ADMIN = "maasum1231@gmail.com"
   useEffect(() => {
     fetch("/api/auth")
       .then(r => r.json())
       .then(j => {
         if (!j.ok || !j.user) { window.location.href = "/login"; return; }
         if (j.user.role !== "admin") { window.location.href = "/dashboard"; }
+        setCurrentAdmin(j.user)
       })
       .catch(() => { window.location.href = "/login"; })
   }, [])
@@ -235,9 +238,17 @@ export default function AdminDashboard() {
                           <td className={`px-6 py-4 text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{user.balance}</td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
-                              <button onClick={() => toggleSuspend(user.id)} className={`${user.status === "Suspended" ? "text-green-500 hover:text-green-600" : "text-red-500 hover:text-red-600"} text-xs font-medium`}>
-                                {user.status === "Suspended" ? "Activate" : t("suspend")}
-                              </button>
+                              {(() => {
+                                const isMasterTarget = (user.email||"").toLowerCase() === MASTER_ADMIN;
+                                const isMasterRequester = (currentAdmin?.email||"").toLowerCase() === MASTER_ADMIN;
+                                const canSuspend = !isMasterTarget && (isMasterRequester || user.role !== "admin");
+                                if (!canSuspend) return <span className="text-xs text-gray-400">—</span>;
+                                return (
+                                  <button onClick={() => toggleSuspend(user.id)} className={`${user.status === "Suspended" ? "text-green-500 hover:text-green-600" : "text-red-500 hover:text-red-600"} text-xs font-medium`}>
+                                    {user.status === "Suspended" ? "Activate" : t("suspend")}
+                                  </button>
+                                );
+                              })()}
                             </div>
                           </td>
                         </tr>
