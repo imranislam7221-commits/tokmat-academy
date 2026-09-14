@@ -39,21 +39,10 @@ export default function AdminDashboard() {
       .catch(() => { window.location.href = "/login"; })
   }, [])
 
-  if (!mounted) return null
-
-  const t = (key: string) => translate(locale, key)
-
-  const sections = [
-    { id: "overview" as const, label: t("overview"), icon: "📊" },
-    { id: "users" as const, label: t("users"), icon: "👥" },
-    { id: "signals" as const, label: t("signals"), icon: "📡" },
-    { id: "content" as const, label: t("content"), icon: "📝" },
-    { id: "settings" as const, label: t("settings"), icon: "⚙️" },
-  ]
-
   // Real users list from database
   const [dbUsers, setDbUsers] = useState<any[]>([])
   const [usersLoading, setUsersLoading] = useState(true)
+  const [posting, setPosting] = useState(false)
 
   useEffect(() => {
     if (activeSection !== "users") return
@@ -73,7 +62,17 @@ export default function AdminDashboard() {
     } catch {}
   }
 
-  const [posting, setPosting] = useState(false)
+  if (!mounted) return null
+
+  const t = (key: string) => translate(locale, key)
+
+  const sections = [
+    { id: "overview" as const, label: t("overview"), icon: "📊" },
+    { id: "users" as const, label: t("users"), icon: "👥" },
+    { id: "signals" as const, label: t("signals"), icon: "📡" },
+    { id: "content" as const, label: t("content"), icon: "📝" },
+    { id: "settings" as const, label: t("settings"), icon: "⚙️" },
+  ]
   const handlePostSignal = async () => {
     if (!newSignal.pair || !newSignal.entry) return
     setPosting(true)
