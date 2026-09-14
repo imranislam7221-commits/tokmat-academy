@@ -62,6 +62,11 @@ export default function AdminDashboard() {
     } catch {}
   }
 
+  const totalUsers = dbUsers.length;
+  const premiumUsers = dbUsers.filter((u:any)=> (u.plan||"").toLowerCase().includes("premium") || (u.plan||"").toLowerCase().includes("supreme")).length;
+  const activeSignals = liveSignals.length;
+  const premiumPct = totalUsers ? Math.round((premiumUsers/totalUsers)*100) : 0;
+
   if (!mounted) return null
 
   const t = (key: string) => translate(locale, key)
@@ -147,10 +152,10 @@ export default function AdminDashboard() {
                 {/* Stats */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
-                    { label: t("totalUsers"), value: "2,847", change: `+124 ${t("thisMonth")}`, icon: "👥", color: "from-blue-500 to-blue-600" },
-                    { label: t("revenue"), value: "$48,520", change: `+$5,200 ${t("thisMonth")}`, icon: "💰", color: "from-green-500 to-green-600" },
-                    { label: t("activeSignals"), value: "342", change: `12 ${t("today")}`, icon: "📡", color: "from-purple-500 to-purple-600" },
-                    { label: t("premiumUsers"), value: "856", change: `30% ${t("percentOfTotal")}`, icon: "⭐", color: "from-orange-500 to-orange-600" },
+                    { label: t("totalUsers"), value: totalUsers.toLocaleString(), change: `${totalUsers} ${t("thisMonth")}`, icon: "👥", color: "from-blue-500 to-blue-600" },
+                    { label: t("revenue"), value: `$${(premiumUsers*49).toLocaleString()}`, change: `${premiumUsers} × $49 ${t("thisMonth")}`, icon: "💰", color: "from-green-500 to-green-600" },
+                    { label: t("activeSignals"), value: String(activeSignals), change: `${activeSignals} ${t("today")}`, icon: "📡", color: "from-purple-500 to-purple-600" },
+                    { label: t("premiumUsers"), value: String(premiumUsers), change: `${premiumPct}% ${t("percentOfTotal")}`, icon: "⭐", color: "from-orange-500 to-orange-600" },
                   ].map((stat, i) => (
                     <div key={i} className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl p-5`}>
                       <div className="flex items-center justify-between mb-3">
@@ -167,13 +172,13 @@ export default function AdminDashboard() {
                 <div className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl p-6`}>
                   <h3 className={`text-lg font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>{t("recentActivity")}</h3>
                   <div className="space-y-3">
-                    {[
-                      { text: `${t("newRegistered")} Sarah Ahmed`, time: `5 ${t("minAgo")}`, icon: "👤", color: "text-blue-500" },
-                      { text: `${t("signalPosted")} EUR/USD BUY @ 1.0850`, time: `15 ${t("minAgo")}`, icon: "📡", color: "text-green-500" },
-                      { text: `${t("premiumUpgrade")} James Wilson`, time: `1 ${t("hourAgo")}`, icon: "⭐", color: "text-yellow-500" },
-                      { text: `${t("signalTPHit")} XAU/USD +1.28%`, time: `2 ${t("hourAgo")}`, icon: "🎯", color: "text-green-500" },
-                      { text: `${t("newRegistered")} Ali Hassan`, time: `3 ${t("hourAgo")}`, icon: "👤", color: "text-blue-500" },
-                    ].map((activity, i) => (
+                    {(() => {
+                      const acts:any[] = [];
+                      dbUsers.slice(0,3).forEach((u:any)=> acts.push({ text: `${t("newRegistered")} ${u.firstName||u.email.split('@')[0]}`, time: u.joined ? new Date(u.joined).toLocaleDateString() : t("today"), icon: "👤", color: "text-blue-500" }));
+                      liveSignals.slice(0,2).forEach((s:any)=> acts.push({ text: `${t("signalPosted")} ${s.pair} ${s.direction} @ ${s.entry}`, time: s.posted || s.time || "now", icon: "📡", color: "text-green-500" }));
+                      if (acts.length===0) acts.push({ text: t("noActivity"), time: t("today"), icon: "📊", color: "text-gray-500" });
+                      return acts.slice(0,5);
+                    })().map((activity, i) => (
                       <div key={i} className={`flex items-center gap-3 p-3 rounded-xl ${isDark ? "bg-dark-700/50" : "bg-gray-50"}`}>
                         <span className={`text-xl ${activity.color}`}>{activity.icon}</span>
                         <div className="flex-1">
