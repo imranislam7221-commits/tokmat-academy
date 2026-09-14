@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useTheme } from "@/components/ThemeProvider"
 import { t, locales, type Locale } from "@/lib/translations"
 
@@ -29,6 +30,8 @@ function getNavLinks(locale: Locale) {
 
 export function Header({ locale: initialLocale }: { locale: string }) {
   const { theme } = useTheme()
+  const pathname = usePathname()
+  const isAdminPage = pathname?.startsWith("/admin")
   const [currentLocale, setCurrentLocale] = useState<Locale>(initialLocale as Locale)
   const direction = currentLocale === "ar" ? "rtl" : "ltr"
   const [scrolled, setScrolled] = useState(false)
@@ -169,15 +172,19 @@ export function Header({ locale: initialLocale }: { locale: string }) {
             {/* CTA / Auth Button */}
             {user ? (
               <div className="hidden sm:flex items-center gap-2">
-                <Link href={user.role === "admin" ? "/admin" : "/dashboard"} className={`!px-4 sm:!px-5 !py-2 !text-sm !rounded-lg font-bold transition-all ${user.role==="admin" ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg" : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg"}`}>
-                  {user.role === "admin" ? "Admin Panel" : "Dashboard"}
-                </Link>
-                <button
-                  onClick={async () => { try { await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }) }) } catch {}; setUser(null); window.location.href="/"; }}
-                  className={`!px-3 !py-2 !text-sm !rounded-lg font-semibold border transition-all ${isDark ? "border-white/20 text-white hover:bg-white/10" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}
-                >
-                  Logout
-                </button>
+                {!isAdminPage && (
+                  <Link href={user.role === "admin" ? "/admin" : "/dashboard"} className={`!px-4 sm:!px-5 !py-2 !text-sm !rounded-lg font-bold transition-all ${user.role==="admin" ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg" : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg"}`}>
+                    {user.role === "admin" ? "Admin Panel" : "Dashboard"}
+                  </Link>
+                )}
+                {!isAdminPage && (
+                  <button
+                    onClick={async () => { try { await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }) }) } catch {}; setUser(null); window.location.href="/"; }}
+                    className={`!px-3 !py-2 !text-sm !rounded-lg font-semibold border transition-all ${isDark ? "border-white/20 text-white hover:bg-white/10" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}
+                  >
+                    Logout
+                  </button>
+                )}
               </div>
             ) : (
               <Link href="/register" className={`hidden sm:inline-flex !px-4 sm:!px-5 !py-2 !text-sm !rounded-lg font-semibold transition-all ${isDark ? "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20" : "btn-primary"}`}>
@@ -223,14 +230,16 @@ export function Header({ locale: initialLocale }: { locale: string }) {
               ))}
               <div className={`border-t mt-2 pt-2 px-4 ${isDark ? "border-dark-700" : "border-gray-100"}`}>
                 {user ? (
-                  <>
-                    <Link href={user.role === "admin" ? "/admin" : "/dashboard"} className={`w-full text-center !py-3 block rounded-xl font-bold ${user.role==="admin" ? "bg-red-600 text-white" : "btn-primary"}`}>
-                      {user.role === "admin" ? "Admin Panel" : "Dashboard"}
-                    </Link>
-                    <button onClick={async () => { try { await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }) }) } catch {}; setUser(null); window.location.href="/"; }} className={`w-full mt-2 text-center !py-2.5 block rounded-xl font-semibold border ${isDark ? "border-white/20 text-white" : "border-gray-200 text-gray-700"}`}>
-                      Logout
-                    </button>
-                  </>
+                  isAdminPage ? null : (
+                    <>
+                      <Link href={user.role === "admin" ? "/admin" : "/dashboard"} className={`w-full text-center !py-3 block rounded-xl font-bold ${user.role==="admin" ? "bg-red-600 text-white" : "btn-primary"}`}>
+                        {user.role === "admin" ? "Admin Panel" : "Dashboard"}
+                      </Link>
+                      <button onClick={async () => { try { await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }) }) } catch {}; setUser(null); window.location.href="/"; }} className={`w-full mt-2 text-center !py-2.5 block rounded-xl font-semibold border ${isDark ? "border-white/20 text-white" : "border-gray-200 text-gray-700"}`}>
+                        Logout
+                      </button>
+                    </>
+                  )
                 ) : (
                   <Link href="/register" className="btn-primary w-full text-center !py-3 block">
                     {t(currentLocale, "navJoinFree")}
