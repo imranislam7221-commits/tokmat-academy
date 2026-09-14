@@ -26,6 +26,20 @@ export default function VideosPage() {
   const { theme } = useTheme()
   const isDark = theme === "dark"
   const t = (key: string) => translate(locale, key)
+  const [myRequests, setMyRequests] = useState<any[]>([])
+  useEffect(()=>{ fetch("/api/video-requests").then(r=>r.json()).then(j=>{ if(j.ok) setMyRequests(j.requests||[])}).catch(()=>{}) }, [])
+  const getStatus = (vid:string) => myRequests.find((r:any)=> String(r.video_id)===String(vid))?.status
+  const handleRequest = async (v:any) => {
+    try {
+      const me = await fetch("/api/auth").then(r=>r.json());
+      if (!me.ok || !me.user) { window.location.href="/register"; return; }
+      const res = await fetch("/api/video-requests", { method:"POST", headers:{ "Content-Type":"application/json"}, body: JSON.stringify({ video_id: String(v.id), video_title: v.title }) });
+      const j = await res.json();
+      const msg = j.ok ? "Request sent! Admin will approve soon." : (j.error||"Failed");
+      const el=document.createElement("div"); el.textContent=msg; el.className=`fixed bottom-6 right-6 ${j.ok?"bg-green-600":"bg-red-600"} text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm font-bold`; document.body.appendChild(el); setTimeout(()=>el.remove(),2500);
+      if (j.ok) setMyRequests((prev:any)=> [...prev, j.request]);
+    } catch { window.location.href="/register"; }
+  }
   const handleCheckout = async (product: string) => {
     try {
       // Real session check — server theke user ane
@@ -71,9 +85,12 @@ export default function VideosPage() {
               <div className="p-4">
                 <div className={`font-semibold text-sm mb-1 truncate ${isDark ? "text-white" : "text-gray-900"}`}>{v.title}</div>
                 <p className={`text-xs mb-3 line-clamp-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{v.desc}</p>
-                <a href="/register" className={`block w-full font-bold text-sm py-2.5 rounded-xl text-center transition-colors ${isDark ? "bg-purple-600 hover:bg-purple-500 text-white" : "bg-purple-600 hover:bg-purple-700 text-white"}`}>
-                  {t("unlockVideo")} {v.price}
-                </a>
+                {(() => {
+                  const st = getStatus(String(v.id));
+                  if (st==="approved") return <button onClick={()=> window.location.href=`/videos/${v.id}` } className="block w-full font-bold text-sm py-2.5 rounded-xl text-center bg-green-600 hover:bg-green-700 text-white">▶ Watch Now</button>;
+                  if (st==="pending") return <button disabled className="block w-full font-bold text-sm py-2.5 rounded-xl text-center bg-yellow-500 text-white opacity-80 cursor-not-allowed">⏳ Pending Approval</button>;
+                  return <button onClick={()=> handleRequest(v)} className={`block w-full font-bold text-sm py-2.5 rounded-xl text-center transition-colors ${isDark ? "bg-purple-600 hover:bg-purple-500 text-white" : "bg-purple-600 hover:bg-purple-700 text-white"}`}>{t("unlockVideo")} {v.price} - Request</button>;
+                })()}
               </div>
             </div>
           ))}

@@ -22,6 +22,8 @@ export default function AdminDashboard() {
   const [newSignal, setNewSignal] = useState({ pair: "", direction: "BUY", entry: "", tp: "", sl: "" })
   const [mounted, setMounted] = useState(false)
   const [liveSignals, setLiveSignals] = useState<any[]>(demoSignals)
+  const [videoReqs, setVideoReqs] = useState<any[]>([])
+  const [videoReqsLoading, setVideoReqsLoading] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -63,6 +65,16 @@ export default function AdminDashboard() {
         setDbUsers((prev: any[]) => prev.map((u: any) => u.id === userId ? { ...u, status: u.status === "Active" ? "Suspended" : "Active" } : u))
       }
     } catch {}
+  }
+
+  useEffect(() => {
+    if (activeSection !== "content") return
+    setVideoReqsLoading(true)
+    fetch("/api/video-requests").then(r=>r.json()).then(j=>{ if(j.ok) setVideoReqs(j.requests||[]); setVideoReqsLoading(false)}).catch(()=> setVideoReqsLoading(false))
+  }, [activeSection])
+
+  const handleVideoAction = async (id:number, status:string) => {
+    try { const r=await fetch("/api/video-requests",{method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({id, status})}); if(r.ok) setVideoReqs((prev:any)=> prev.map((x:any)=> x.id===id ? {...x, status}:x)); } catch {}
   }
 
   const totalUsers = dbUsers.length;
@@ -313,27 +325,33 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* CONTENT */}
+            {/* CONTENT - Video Requests */}
             {activeSection === "content" && (
               <div className="space-y-4">
-                <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{t("contentManagement")}</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {[
-                    { title: t("educationVideos"), desc: t("uploadManageVideo"), icon: "🎬", count: `24 ${t("videos")}`, color: "from-purple-500 to-purple-600" },
-                    { title: t("newsArticles"), desc: t("writePublishNews"), icon: "📰", count: `156 ${t("articles")}`, color: "from-blue-500 to-blue-600" },
-                    { title: t("resultsReports"), desc: t("monthlyPerformance"), icon: "📊", count: `12 ${t("reports")}`, color: "from-green-500 to-green-600" },
-                    { title: t("brokerPartners"), desc: t("manageAffiliate"), icon: "🏦", count: `8 ${t("brokersCount")}`, color: "from-orange-500 to-orange-600" },
-                  ].map((item, i) => (
-                    <div key={i} className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl p-6 hover:shadow-lg transition-all cursor-pointer`}>
-                      <div className="flex items-start justify-between mb-4">
-                        <span className="text-3xl">{item.icon}</span>
-                        <span className={`bg-gradient-to-r ${item.color} text-white text-xs font-bold px-3 py-1 rounded-full`}>{item.count}</span>
-                      </div>
-                      <h4 className={`font-bold text-lg mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>{item.title}</h4>
-                      <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>{item.desc}</p>
+                <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Video Requests - Approve to Unlock</h3>
+                {videoReqsLoading ? <div className={`text-sm ${isDark?"text-gray-400":"text-gray-500"}`}>Loading...</div> : videoReqs.length===0 ? <div className={`text-sm ${isDark?"text-gray-400":"text-gray-500"} border rounded-xl p-6 text-center ${isDark?"bg-dark-800 border-dark-700":"bg-white border-gray-100"}`}>No video requests yet. When users click "Request" on videos page, it will appear here.</div> : (
+                  <div className={`${isDark?"bg-dark-800 border-dark-700":"bg-white border-gray-100"} border rounded-2xl overflow-hidden`}>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead><tr className={isDark?"bg-dark-700":"bg-gray-50"}><th className="text-left px-4 py-3 text-xs font-semibold uppercase">User</th><th className="text-left px-4 py-3 text-xs font-semibold uppercase">Video</th><th className="text-left px-4 py-3 text-xs font-semibold uppercase">Status</th><th className="text-left px-4 py-3 text-xs font-semibold uppercase">Date</th><th className="text-left px-4 py-3 text-xs font-semibold uppercase">Action</th></tr></thead>
+                        <tbody className={`divide-y ${isDark?"divide-dark-700":"divide-gray-100"}`}>
+                          {videoReqs.map((r:any)=> (
+                            <tr key={r.id}>
+                              <td className={`px-4 py-3 text-sm ${isDark?"text-gray-300":"text-gray-700"}`}>{r.email}<br/><span className="text-xs text-gray-500">{r.first_name}</span></td>
+                              <td className={`px-4 py-3 text-sm font-medium ${isDark?"text-white":"text-gray-900"}`}>{r.video_title} <span className="text-xs text-gray-500">({r.video_id})</span></td>
+                              <td className="px-4 py-3"><span className={`text-xs font-bold px-2 py-1 rounded-full ${r.status==='approved'?'bg-green-100 text-green-700': r.status==='rejected'?'bg-red-100 text-red-700':'bg-yellow-100 text-yellow-700'}`}>{r.status}</span></td>
+                              <td className={`px-4 py-3 text-xs ${isDark?"text-gray-400":"text-gray-500"}`}>{new Date(r.created_at).toLocaleString()}</td>
+                              <td className="px-4 py-3 flex gap-2">
+                                {r.status!=='approved' && <button onClick={()=>handleVideoAction(r.id,'approved')} className="bg-green-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-green-700">Approve</button>}
+                                {r.status!=='rejected' && <button onClick={()=>handleVideoAction(r.id,'rejected')} className="bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-red-700">Reject</button>}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
             )}
 
