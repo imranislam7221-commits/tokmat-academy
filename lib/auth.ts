@@ -17,7 +17,7 @@ export interface TokmatUser {
 export async function getUser(): Promise<TokmatUser | null> {
   if (typeof window === "undefined") return null;
   try {
-    const res = await fetch("/api/auth");
+    const res = await fetch("/api/auth", { cache: "no-store", credentials: "include" });
     const data = await res.json();
     if (data.ok && data.user) return data.user as TokmatUser;
     return null;
@@ -32,13 +32,22 @@ export function isAdminEmail(email: string): boolean {
 
 export async function logout() {
   try {
+    // @ts-ignore
+    const { signOut } = await import("firebase/auth");
+    // @ts-ignore
+    const { auth } = await import("@/lib/firebase");
+    await signOut(auth).catch(()=>{});
+  } catch {}
+  try {
     await fetch("/api/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
+      cache: "no-store",
       body: JSON.stringify({ action: "logout" }),
     });
   } catch {}
+  try { localStorage.clear(); sessionStorage.clear(); } catch {}
   window.location.href = "/login";
 }
 

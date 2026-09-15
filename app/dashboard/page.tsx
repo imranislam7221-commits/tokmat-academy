@@ -53,7 +53,7 @@ export default function DashboardPage() {
 
   // Real session guard: server theke check — admin -> /admin, not logged -> /login
   useEffect(() => {
-    fetch("/api/auth")
+    fetch("/api/auth", { cache: "no-store", credentials: "include" })
       .then(r => r.json())
       .then(j => {
         if (!j.ok || !j.user) { window.location.href = "/login"; return; }

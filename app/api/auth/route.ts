@@ -222,17 +222,27 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  // Return current logged-in user
+  // Return current logged-in user - no cache
   try {
     const cookie = req.headers.get("cookie") || "";
     const match = cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
-    if (!match) return NextResponse.json({ ok: true, user: null });
-
+    if (!match) {
+      const r = NextResponse.json({ ok: true, user: null });
+      r.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+      return r;
+    }
     const user = await getUserByToken(match[1]);
-    if (!user) return NextResponse.json({ ok: true, user: null });
-
-    return NextResponse.json({ ok: true, user: toSafeUser(user) });
+    if (!user) {
+      const r = NextResponse.json({ ok: true, user: null });
+      r.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+      return r;
+    }
+    const r = NextResponse.json({ ok: true, user: toSafeUser(user) });
+    r.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    return r;
   } catch {
-    return NextResponse.json({ ok: true, user: null });
+    const r = NextResponse.json({ ok: true, user: null });
+    r.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    return r;
   }
 }

@@ -31,7 +31,7 @@ export default function VideosPage() {
   const getStatus = (vid:string) => myRequests.find((r:any)=> String(r.video_id)===String(vid))?.status
   const handleRequest = async (v:any) => {
     try {
-      const me = await fetch("/api/auth").then(r=>r.json());
+      const me = await fetch("/api/auth", { cache: "no-store", credentials: "include" }).then(r=>r.json());
       if (!me.ok || !me.user) { window.location.href="/register"; return; }
       const res = await fetch("/api/video-requests", { method:"POST", headers:{ "Content-Type":"application/json"}, body: JSON.stringify({ video_id: String(v.id), video_title: v.title }) });
       const j = await res.json();
@@ -43,7 +43,7 @@ export default function VideosPage() {
   const handleCheckout = async (product: string) => {
     try {
       // Real session check — server theke user ane
-      const me = await fetch("/api/auth").then(r => r.json());
+      const me = await fetch("/api/auth", { cache: "no-store", credentials: "include" }).then(r => r.json());
       const email = me?.user?.email;
       if (!me.ok || !email) { window.location.href = "/register"; return; }
       const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ product, email }) });
