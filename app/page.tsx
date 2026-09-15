@@ -145,12 +145,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </Link>
-                <a href="#features" className="btn-outline !rounded-xl text-center">
-                  <svg className="inline w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                  {t("watchDemo")}
-                </a>
+                <Link href="/education" className="btn-outline !rounded-xl text-center">
+                  Full Courses
+                </Link>
               </div>
 
               <div className="flex items-center gap-6">
