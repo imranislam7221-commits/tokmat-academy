@@ -3,7 +3,7 @@ import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCw1RW8T-lakJQb7dZ_eKZ-7c_xIzyT6uI",
+  apiKey: "AIzaSyCw1RWTG-1akJQb7dZ_eKZ-7c_xIzyT6uU",
   authDomain: "tokmataacademy.firebaseapp.com",
   projectId: "tokmataacademy",
   storageBucket: "tokmataacademy.firebasestorage.app",
