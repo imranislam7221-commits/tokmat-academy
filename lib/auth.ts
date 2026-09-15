@@ -35,6 +35,7 @@ export async function logout() {
     await fetch("/api/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ action: "logout" }),
     });
   } catch {}

@@ -179,7 +179,7 @@ export function Header({ locale: initialLocale }: { locale: string }) {
                 )}
                 {!isAdminPage && (
                   <button
-                    onClick={async () => { try { await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }) }) } catch {}; setUser(null); window.location.href="/"; }}
+                    onClick={async () => { try { await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }), credentials: "include" }) } catch {}; setUser(null); window.location.href="/"; }}
                     className={`!px-3 !py-2 !text-sm !rounded-lg font-semibold border transition-all ${isDark ? "border-white/20 text-white hover:bg-white/10" : "border-gray-200 text-gray-700 hover:bg-gray-50"}`}
                   >
                     Logout
@@ -235,7 +235,7 @@ export function Header({ locale: initialLocale }: { locale: string }) {
                       <Link href={user.role === "admin" ? "/admin" : "/dashboard"} className={`w-full text-center !py-3 block rounded-xl font-bold ${user.role==="admin" ? "bg-red-600 text-white" : "btn-primary"}`}>
                         {user.role === "admin" ? "Admin Panel" : "Dashboard"}
                       </Link>
-                      <button onClick={async () => { try { await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }) }) } catch {}; setUser(null); window.location.href="/"; }} className={`w-full mt-2 text-center !py-2.5 block rounded-xl font-semibold border ${isDark ? "border-white/20 text-white" : "border-gray-200 text-gray-700"}`}>
+                      <button onClick={async () => { try { await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }), credentials: "include" }) } catch {}; setUser(null); window.location.href="/"; }} className={`w-full mt-2 text-center !py-2.5 block rounded-xl font-semibold border ${isDark ? "border-white/20 text-white" : "border-gray-200 text-gray-700"}`}>
                         Logout
                       </button>
                     </>

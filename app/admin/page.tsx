@@ -130,7 +130,7 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-3">
             <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t("masterAdmin")}</span>
-            <button onClick={async () => { try { await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }) }) } catch {}; window.location.href="/login"; }} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">{t("logout")}</button>
+            <button onClick={async () => { try { await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }), credentials: "include" }) } catch {}; window.location.href="/login"; }} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">{t("logout")}</button>
           </div>
         </div>
       </nav>

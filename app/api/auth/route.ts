@@ -151,15 +151,23 @@ export async function POST(req: Request) {
       const cookie = req.headers.get("cookie") || "";
       const match = cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
       if (match) {
+        const token = match[1];
+        // Always delete the exact token, even if getUserByToken fails
         try {
-          const u = await getUserByToken(match[1]);
+          const u = await getUserByToken(token);
           if (u) await pool.query(`DELETE FROM sessions WHERE user_id = $1`, [u.id]);
-          await pool.query(`DELETE FROM sessions WHERE token = $1`, [match[1]]).catch(() => {});
         } catch {}
+        await pool.query(`DELETE FROM sessions WHERE token = $1`, [token]).catch(() => {});
       }
-      const clear1 = clearCookieHeader(req);
-      const clear2 = `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-      return NextResponse.json({ ok: true }, { headers: { "Set-Cookie": clear1 } });
+      // Clear cookie for both Secure and non-Secure to avoid https/http mismatch — browser needs exact attributes
+      const clearSecure = `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure`;
+      const clearPlain = `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+      const res = NextResponse.json({ ok: true });
+      res.headers.append("Set-Cookie", clearSecure);
+      res.headers.append("Set-Cookie", clearPlain);
+      // Also append the dynamic one (covers current proto)
+      res.headers.append("Set-Cookie", clearCookieHeader(req));
+      return res;
     }
 
     return NextResponse.json({ ok: false, error: "Unknown action" }, { status: 400 });
