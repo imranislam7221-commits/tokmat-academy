@@ -151,9 +151,15 @@ export async function POST(req: Request) {
       const cookie = req.headers.get("cookie") || "";
       const match = cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
       if (match) {
-        await pool.query(`DELETE FROM sessions WHERE token = $1`, [match[1]]).catch(() => {});
+        try {
+          const u = await getUserByToken(match[1]);
+          if (u) await pool.query(`DELETE FROM sessions WHERE user_id = $1`, [u.id]);
+          await pool.query(`DELETE FROM sessions WHERE token = $1`, [match[1]]).catch(() => {});
+        } catch {}
       }
-      return NextResponse.json({ ok: true }, { headers: { "Set-Cookie": clearCookieHeader(req) } });
+      const clear1 = clearCookieHeader(req);
+      const clear2 = `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+      return NextResponse.json({ ok: true }, { headers: { "Set-Cookie": clear1 } });
     }
 
     return NextResponse.json({ ok: false, error: "Unknown action" }, { status: 400 });
