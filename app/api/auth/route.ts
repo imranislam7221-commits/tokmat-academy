@@ -57,13 +57,54 @@ export async function POST(req: Request) {
   try {
     const { action, firstName, lastName, email, password } = await req.json();
 
+    const emailNorm = email ? String(email).trim().toLowerCase() : "";
+
+    await initDb();
+
+    // ===== GOOGLE LOGIN (Gmail) - save to DB =====
+    if (action === "google") {
+      if (!emailNorm || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
+        return NextResponse.json({ ok: false, error: "Invalid Google email" }, { status: 400 });
+      }
+      // Find existing or create new Google user
+      let userRes = await pool.query(`SELECT * FROM users WHERE email = $1`, [emailNorm]);
+      let user = userRes.rows[0] as DbUser | undefined;
+      if (user) {
+        if (user.status === "Suspended") {
+          return NextResponse.json({ ok: false, error: "Your account has been suspended. Contact support." }, { status: 403 });
+        }
+        if (ADMIN_EMAILS.includes(emailNorm) && user.role !== "admin") {
+          await pool.query(`UPDATE users SET role = 'admin' WHERE id = $1`, [user.id]);
+          user.role = "admin";
+        }
+        await pool.query(`UPDATE users SET last_login = NOW() WHERE id = $1`, [user.id]);
+        // Update name if missing
+        if ((!user.first_name || user.first_name === "User") && firstName) {
+          await pool.query(`UPDATE users SET first_name = $1, last_name = $2 WHERE id = $3`, [String(firstName).trim(), String(lastName||"").trim(), user.id]);
+          user.first_name = String(firstName).trim();
+          user.last_name = String(lastName||"").trim();
+        }
+      } else {
+        const role = ADMIN_EMAILS.includes(emailNorm) ? "admin" : "user";
+        const dummyHash = await bcrypt.hash(crypto.randomBytes(16).toString("hex"), 10);
+        const fn = String(firstName||"").trim() || emailNorm.split("@")[0];
+        const ln = String(lastName||"").trim();
+        const ins = await pool.query(
+          `INSERT INTO users (first_name, last_name, email, password_hash, role) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+          [fn, ln, emailNorm, dummyHash, role]
+        );
+        user = ins.rows[0] as DbUser;
+      }
+      const token = makeToken();
+      const expires = sessionExpiry();
+      await pool.query(`INSERT INTO sessions (token, user_id, expires_at) VALUES ($1, $2, $3)`, [token, user!.id, expires]);
+      const safe = toSafeUser(user!);
+      return NextResponse.json({ ok: true, user: safe, redirect: safe.role === "admin" ? "/admin" : "/dashboard" }, { headers: { "Set-Cookie": cookieHeader(token, expires, req) } });
+    }
+
     if (!email || !password) {
       return NextResponse.json({ ok: false, error: "Email and password required" }, { status: 400 });
     }
-
-    const emailNorm = String(email).trim().toLowerCase();
-
-    await initDb();
 
     // ===== REGISTER =====
     if (action === "register") {
