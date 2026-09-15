@@ -193,21 +193,21 @@ export async function POST(req: Request) {
       const match = cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
       if (match) {
         const token = match[1];
-        // Always delete the exact token, even if getUserByToken fails
+        // Robust: get user_id directly from sessions (even if expired) then delete all user sessions
         try {
-          const u = await getUserByToken(token);
-          if (u) await pool.query(`DELETE FROM sessions WHERE user_id = $1`, [u.id]);
+          const sess = await pool.query(`SELECT user_id FROM sessions WHERE token = $1`, [token]);
+          const uid = (sess.rows[0] as any)?.user_id;
+          if (uid) await pool.query(`DELETE FROM sessions WHERE user_id = $1`, [uid]);
         } catch {}
         await pool.query(`DELETE FROM sessions WHERE token = $1`, [token]).catch(() => {});
       }
-      // Clear cookie for both Secure and non-Secure to avoid https/http mismatch — browser needs exact attributes
-      const clearSecure = `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure`;
-      const clearPlain = `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
       const res = NextResponse.json({ ok: true });
-      res.headers.append("Set-Cookie", clearSecure);
-      res.headers.append("Set-Cookie", clearPlain);
-      // Also append the dynamic one (covers current proto)
-      res.headers.append("Set-Cookie", clearCookieHeader(req));
+      // Use cookies API + raw headers to guarantee clear on both http/https
+      res.cookies.set(COOKIE_NAME, "", { path: "/", httpOnly: true, sameSite: "lax", maxAge: 0, expires: new Date(0) });
+      res.cookies.set(COOKIE_NAME, "", { path: "/", httpOnly: true, sameSite: "lax", maxAge: 0, expires: new Date(0), secure: true });
+      res.cookies.set(COOKIE_NAME, "", { path: "/", httpOnly: true, sameSite: "lax", maxAge: 0, expires: new Date(0), secure: false });
+      res.headers.append("Set-Cookie", `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`);
+      res.headers.append("Set-Cookie", `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure`);
       return res;
     }
 
