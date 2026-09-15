@@ -80,7 +80,19 @@ export default function LoginPage() {
         setErrorMsg(data.error || "Google login failed");
       }
     } catch (err: any) {
-      setErrorMsg(err?.message || "Google login failed");
+      console.error("Firebase Google error:", err);
+      const code = err?.code || "";
+      if (code === "auth/unauthorized-domain") {
+        setErrorMsg("Firebase error: Domain not authorized. Add tokmatacademy.online and tokmat-academy.vercel.app in Firebase Console > Authentication > Settings > Authorized domains.");
+      } else if (code === "auth/operation-not-allowed") {
+        setErrorMsg("Firebase error: Google provider not enabled. Enable it in Firebase Console > Authentication > Sign-in method > Google.");
+      } else if (code === "auth/popup-blocked" || code === "auth/popup-closed-by-user") {
+        setErrorMsg("Popup blocked/closed. Please allow popups and try again.");
+      } else if (code === "auth/cancelled-popup-request") {
+        setErrorMsg("Popup cancelled. Try again.");
+      } else {
+        setErrorMsg(err?.message || "Google login failed");
+      }
     }
   };
 

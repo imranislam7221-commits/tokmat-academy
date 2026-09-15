@@ -121,11 +121,18 @@ export default function RegisterPage() {
         setTimeout(() => toast.remove(), 3000);
       }
     } catch (err: any) {
+      console.error("Firebase Google error:", err);
+      const code = err?.code || "";
+      let msg = err?.message || "Google login failed";
+      if (code === "auth/unauthorized-domain") msg = "Firebase: Domain not authorized. Add tokmatacademy.online & tokmat-academy.vercel.app in Firebase Console > Authentication > Settings > Authorized domains.";
+      else if (code === "auth/operation-not-allowed") msg = "Firebase: Google provider not enabled. Enable it in Firebase Console > Authentication > Sign-in method > Google.";
+      else if (code === "auth/popup-blocked") msg = "Popup blocked. Allow popups and try again.";
+      else if (code === "auth/popup-closed-by-user") msg = "Popup closed. Try again.";
       const toast = document.createElement("div");
-      toast.textContent = err?.message || "Google login failed";
+      toast.textContent = msg;
       toast.className = "fixed bottom-6 right-6 bg-red-600 text-white px-5 py-3 rounded-xl shadow-xl z-50 text-sm font-bold";
       document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
+      setTimeout(() => toast.remove(), 4000);
     }
   }
 

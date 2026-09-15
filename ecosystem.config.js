@@ -1,7 +1,8 @@
 module.exports = {
   apps: [{
     name: "tokmat",
-    script: "./server.js",
+    script: "npm",
+    args: "start",
     cwd: "/var/www/tokmat-academy",
     instances: 1,
     exec_mode: "fork",
