@@ -34,6 +34,7 @@ export default function VideoDetailPage() {
   const t = (key: string) => translate(locale, key)
 
   const [authState, setAuthState] = useState<"loading" | "ok" | "denied">("loading")
+  const [activeLesson, setActiveLesson] = useState(1)
 
   // Guard: video approved na hole access nai
   useEffect(() => {
@@ -90,16 +91,16 @@ export default function VideoDetailPage() {
           ← {t("backToVideos") || "Back to Videos"}
         </Link>
 
-        {/* Player */}
+        {/* Player — sample/mock video (pore nijer video URL boshano jabe) */}
         <div className="relative aspect-video rounded-2xl overflow-hidden bg-black mb-6 shadow-2xl">
-          {/* Real video URL admin er kase ache na, tai placeholder player */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-            <div className="w-20 h-20 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center mb-4">
-              <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-            </div>
-            <p className="font-bold text-lg">{video.title}</p>
-            <p className="text-sm text-white/60 mt-1">{video.dur} • {video.lessons} lessons</p>
-          </div>
+          <video
+            key={activeLesson}
+            className="w-full h-full"
+            controls
+            autoPlay
+            poster={video.img}
+            src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+          />
         </div>
 
         {/* Info */}
@@ -110,15 +111,24 @@ export default function VideoDetailPage() {
           <h2 className={`font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>Lessons</h2>
           <div className="space-y-2">
             {Array.from({ length: video.lessons }).map((_, i) => (
-              <div key={i} className={`flex items-center gap-3 p-3 rounded-xl ${isDark ? "bg-dark-700" : "bg-gray-50"}`}>
+              <button
+                key={i}
+                onClick={() => setActiveLesson(i + 1)}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-colors ${
+                  activeLesson === i + 1
+                    ? "bg-purple-600/20 border border-purple-500/50"
+                    : isDark ? "bg-dark-700 hover:bg-dark-600" : "bg-gray-50 hover:bg-gray-100"
+                }`}
+              >
                 <div className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
                   {i + 1}
                 </div>
                 <span className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                   Lesson {i + 1}: {video.title} — Part {i + 1}
                 </span>
-                <span className={`ml-auto text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>{video.dur}</span>
-              </div>
+                {activeLesson === i + 1 && <span className="ml-auto text-xs font-bold text-purple-400">▶ Playing</span>}
+                {activeLesson !== i + 1 && <span className={`ml-auto text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>{video.dur}</span>}
+              </button>
             ))}
           </div>
         </div>
