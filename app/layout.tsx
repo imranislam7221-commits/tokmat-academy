@@ -5,6 +5,9 @@ import "./globals.css"
 export const metadata = {
   title: "Tokmat Academy - Forex Education Platform",
   description: "International Forex Education & Trading Platform",
+  icons: {
+    icon: "/favicon.png",
+  },
 }
 
 export default async function RootLayout({ children, params }: { children: React.ReactNode; params: Promise<{ locale?: string }> }) {
