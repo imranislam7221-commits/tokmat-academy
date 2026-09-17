@@ -31,6 +31,10 @@ export default function AdminDashboard() {
   const [showVideoForm, setShowVideoForm] = useState(false)
   const [editingVideo, setEditingVideo] = useState<any>(null)
   const [videoForm, setVideoForm] = useState({ title: "", desc: "", lessons: "5", dur: "", price: "$5", img: "", video_url: "" })
+  // Direct video upload state
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadMsg, setUploadMsg] = useState("")
   // Limited Offer banner + site settings (site_settings table theke)
   const [offerSettings, setOfferSettings] = useState({ enabled: true, title: "", subtitle: "", deadline: "", ctaText: "" })
   const [siteSettings, setSiteSettings] = useState({ site_name: "", support_email: "", telegram_link: "", max_free_signals: "" })
@@ -174,6 +178,33 @@ export default function AdminDashboard() {
       const res = await fetch(`/api/videos?id=${id}`, { method: "DELETE" })
       if (res.ok) setDbVideos((prev) => prev.filter((v) => v.id !== id))
     } catch {}
+  }
+
+  // Direct video upload — file select korlei Vercel Blob e jay, URL form e boshbe
+  const handleVideoUpload = async (file: File) => {
+    setUploading(true); setUploadProgress(0); setUploadMsg("")
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      const url = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open("POST", "/api/upload-video")
+        xhr.upload.onprogress = (e) => { if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100)) }
+        xhr.onload = () => {
+          try {
+            const j = JSON.parse(xhr.responseText)
+            if (xhr.status === 200 && j.ok) resolve(j.url)
+            else reject(new Error(j.error || "Upload failed"))
+          } catch { reject(new Error("Upload failed")) }
+        }
+        xhr.onerror = () => reject(new Error("Upload failed"))
+        xhr.send(fd)
+      })
+      setVideoForm((prev) => ({ ...prev, video_url: url }))
+      setUploadMsg("✅ Upload complete! Video URL set.")
+    } catch (e: any) {
+      setUploadMsg("❌ " + (e?.message || "Upload failed"))
+    } finally { setUploading(false) }
   }
 
   const handleVideoAction = async (id:number, status:string) => {
@@ -450,7 +481,29 @@ export default function AdminDashboard() {
                       <input type="number" min="1" placeholder="Lessons count" value={videoForm.lessons} onChange={(e) => setVideoForm({ ...videoForm, lessons: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
                       <input type="text" placeholder="Duration (e.g. 12:30)" value={videoForm.dur} onChange={(e) => setVideoForm({ ...videoForm, dur: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
                       <input type="text" placeholder="Thumbnail image URL" value={videoForm.img} onChange={(e) => setVideoForm({ ...videoForm, img: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none md:col-span-2 ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
-                      <input type="text" placeholder="Video URL (mp4 / embed link) *" value={videoForm.video_url} onChange={(e) => setVideoForm({ ...videoForm, video_url: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none md:col-span-2 ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+
+                      {/* Direct video upload — file select korlei Vercel Blob e jay */}
+                      <div className={`md:col-span-2 rounded-xl border p-4 ${isDark ? "bg-dark-700/50 border-dark-600" : "bg-gray-50 border-gray-200"}`}>
+                        <label className={`text-xs font-semibold mb-2 block ${isDark ? "text-gray-300" : "text-gray-600"}`}>📤 Upload Video File (phone/PC theke direct — mp4/webm/mov, max 2GB)</label>
+                        <input
+                          type="file"
+                          accept="video/mp4,video/webm,video/quicktime,video/x-m4v,.mp4,.webm,.mov,.m4v"
+                          disabled={uploading}
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleVideoUpload(f) }}
+                          className={`block w-full text-sm ${isDark ? "text-gray-300 file:bg-blue-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:mr-3" : "text-gray-700 file:bg-blue-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:mr-3"}`}
+                        />
+                        {uploading && (
+                          <div className="mt-3">
+                            <div className={`w-full h-2 rounded-full overflow-hidden ${isDark ? "bg-dark-600" : "bg-gray-200"}`}>
+                              <div className="h-full bg-blue-600 transition-all" style={{ width: `${uploadProgress}%` }}></div>
+                            </div>
+                            <div className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>⏳ Uploading... {uploadProgress}% (boro file hole somoy lagbe, tab bondho korona)</div>
+                          </div>
+                        )}
+                        {uploadMsg && <div className={`text-xs mt-2 font-medium ${uploadMsg.startsWith("✅") ? "text-green-500" : "text-red-500"}`}>{uploadMsg}</div>}
+                      </div>
+
+                      <input type="text" placeholder="Video URL (upload korle auto boshbe, nato paste koro)" value={videoForm.video_url} onChange={(e) => setVideoForm({ ...videoForm, video_url: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none md:col-span-2 ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
                     </div>
                     <div className="flex gap-3 mt-4">
                       <button onClick={saveVideo} className="bg-green-600 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-green-700 transition-colors">{editingVideo ? "Update Video" : "Add Video"}</button>
