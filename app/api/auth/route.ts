@@ -6,7 +6,9 @@ import bcrypt from "bcryptjs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const ADMIN_EMAILS = ["maasum1231@gmail.com"];
+import { getMasterAdminEmails } from "@/lib/admin";
+
+const ADMIN_EMAILS = getMasterAdminEmails();
 
 // ===== Login rate limiting (brute-force protection) =====
 // Per server instance in-memory map: email+IP -> { count, resetAt }

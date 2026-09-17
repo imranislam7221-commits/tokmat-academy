@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { pool, initDb } from "@/lib/db";
 import { getUserFromRequest } from "../auth/route";
 
-const MASTER_ADMIN = "maasum1231@gmail.com";
+import { getMasterAdminEmails } from "@/lib/admin";
+
+const MASTER_ADMIN = getMasterAdminEmails()[0];
 
 async function requireAdmin(req: Request): Promise<{ ok: boolean; user?: any }> {
   try {

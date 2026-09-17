@@ -26,9 +26,9 @@ export async function getUser(): Promise<TokmatUser | null> {
   }
 }
 
-export function isAdminEmail(email: string): boolean {
-  return ["maasum1231@gmail.com"].includes(email.trim().toLowerCase());
-}
+import { isAdminEmail } from "./admin";
+
+export { isAdminEmail };
 
 export async function logout() {
   // 1) Firebase session clear (Google login er jonno)

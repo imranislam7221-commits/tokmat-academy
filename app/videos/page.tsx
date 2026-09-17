@@ -84,8 +84,9 @@ export default function VideosPage() {
                 <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded">{v.dur}</span>
               </div>
               <div className="p-4">
-                <div className={`font-semibold text-sm mb-1 truncate ${isDark ? "text-white" : "text-gray-900"}`}>{t(`vid${v.id}Title`)}</div>
-                <p className={`text-xs mb-3 line-clamp-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t(`vid${v.id}Desc`)}</p>
+                {/* Admin-set title/desc direct dekhano — khali hole translated fallback */}
+                <div className={`font-semibold text-sm mb-1 truncate ${isDark ? "text-white" : "text-gray-900"}`}>{v.title || t(`vid${v.id}Title`)}</div>
+                <p className={`text-xs mb-3 line-clamp-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{v.description || v.desc || t(`vid${v.id}Desc`)}</p>
                 {(() => {
                   const st = getStatus(String(v.id));
                   if (st==="approved") return <button onClick={()=> window.location.href=`/videos/${v.id}` } className="block w-full font-bold text-sm py-2.5 rounded-xl text-center bg-green-600 hover:bg-green-700 text-white">▶ {t("watchNow")}</button>;

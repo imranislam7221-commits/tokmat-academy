@@ -31,8 +31,9 @@ export default function AdminDashboard() {
   const [showVideoForm, setShowVideoForm] = useState(false)
   const [editingVideo, setEditingVideo] = useState<any>(null)
   const [videoForm, setVideoForm] = useState({ title: "", desc: "", lessons: "5", dur: "", price: "$5", img: "", video_url: "" })
-  // Limited Offer banner settings (site_settings table theke)
+  // Limited Offer banner + site settings (site_settings table theke)
   const [offerSettings, setOfferSettings] = useState({ enabled: true, title: "", subtitle: "", deadline: "", ctaText: "" })
+  const [siteSettings, setSiteSettings] = useState({ site_name: "", support_email: "", telegram_link: "", max_free_signals: "" })
   const [offerSaving, setOfferSaving] = useState(false)
 
   useEffect(() => {
@@ -45,9 +46,24 @@ export default function AdminDashboard() {
           deadline: j.settings.offer_deadline ? j.settings.offer_deadline.slice(0, 16) : "",
           ctaText: j.settings.offer_cta_text || "",
         })
+        setSiteSettings({
+          site_name: j.settings.site_name || "",
+          support_email: j.settings.support_email || "",
+          telegram_link: j.settings.telegram_link || "",
+          max_free_signals: j.settings.max_free_signals || "",
+        })
       }
     }).catch(()=>{})
   }, [])
+
+  const saveSiteSettings = async () => {
+    try {
+      const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ site_name: siteSettings.site_name, support_email: siteSettings.support_email, telegram_link: siteSettings.telegram_link, max_free_signals: siteSettings.max_free_signals }) })
+      if (res.ok) {
+        const el = document.createElement("div"); el.textContent = "Site settings saved!"; el.className = "fixed bottom-6 right-6 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm font-bold"; document.body.appendChild(el); setTimeout(()=>el.remove(), 2500)
+      }
+    } catch {}
+  }
 
   const saveOfferSettings = async () => {
     setOfferSaving(true)
@@ -65,8 +81,19 @@ export default function AdminDashboard() {
     setLocale((params.get("locale") || "en") as Locale)
     fetch("/api/signals").then(r=>r.json()).then(j=>{ if(Array.isArray(j.signals)) setLiveSignals(j.signals.map((s:any,i:number)=>({ id:s.id||i, pair:s.pair, direction:s.direction, entry:s.entry, tp:s.tp, sl:s.sl, posted:s.time||"now"}))) }).catch(()=>{})
   }, [])  // Admin guard: only real admin session can access
+
+  // Signal delete (admin) — DB theke remove + list refresh
+  const deleteSignal = async (id: number) => {
+    try {
+      const res = await fetch(`/api/signals?id=${id}`, { method: "DELETE" })
+      if (res.ok) {
+        setLiveSignals((prev) => prev.filter((s) => s.id !== id))
+        const el = document.createElement("div"); el.textContent = "Signal deleted"; el.className = "fixed bottom-6 right-6 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm font-bold"; document.body.appendChild(el); setTimeout(()=>el.remove(), 2000)
+      }
+    } catch {}
+  }
   const [currentAdmin, setCurrentAdmin] = useState<any>(null)
-  const MASTER_ADMIN = "maasum1231@gmail.com"
+  const MASTER_ADMIN = (process.env.NEXT_PUBLIC_MASTER_ADMIN_EMAIL || "maasum1231@gmail.com").toLowerCase()
   useEffect(() => {
     fetch("/api/auth", { cache: "no-store", credentials: "include" })
       .then(r => r.json())
@@ -394,7 +421,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="flex items-center gap-3">
                         <span className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>{signal.posted}</span>
-                        <button className="text-red-500 hover:text-red-600 text-xs font-medium">{t("delete")}</button>
+                        <button onClick={() => deleteSignal(signal.id)} className="text-red-500 hover:text-red-600 text-xs font-medium">{t("delete")}</button>
                       </div>
                     </div>
                   ))}
@@ -545,18 +572,29 @@ export default function AdminDashboard() {
                   <button onClick={saveOfferSettings} className="mt-4 bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors">{t("saveSettings")}</button>
                 </div>
 
-                {/* Static site info (display only) */}
-                {[
-                  { title: t("siteName"), value: "Tokmat Academy", type: "text" },
-                  { title: t("supportEmail"), value: "support@tokmatacademy.com", type: "email" },
-                  { title: t("telegramLink"), value: "https://t.me/TokmatSignal", type: "text" },
-                  { title: t("maxFreeSignals"), value: "3", type: "number" },
-                ].map((setting, i) => (
-                  <div key={i} className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-xl p-4 flex items-center justify-between`}>
-                    <label className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>{setting.title}</label>
-                    <input type={setting.type} defaultValue={setting.value} className={`px-4 py-2 rounded-lg text-sm border outline-none w-64 text-right ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                {/* Site Info — editable + save-able */}
+                <div className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl p-6`}>
+                  <h4 className={`font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>🌐 Site Info</h4>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div>
+                      <label className={`text-xs font-semibold mb-1 block ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t("siteName")}</label>
+                      <input type="text" value={siteSettings.site_name} onChange={(e) => setSiteSettings({ ...siteSettings, site_name: e.target.value })} className={`w-full px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                    </div>
+                    <div>
+                      <label className={`text-xs font-semibold mb-1 block ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t("supportEmail")}</label>
+                      <input type="email" value={siteSettings.support_email} onChange={(e) => setSiteSettings({ ...siteSettings, support_email: e.target.value })} className={`w-full px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                    </div>
+                    <div>
+                      <label className={`text-xs font-semibold mb-1 block ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t("telegramLink")}</label>
+                      <input type="text" value={siteSettings.telegram_link} onChange={(e) => setSiteSettings({ ...siteSettings, telegram_link: e.target.value })} className={`w-full px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                    </div>
+                    <div>
+                      <label className={`text-xs font-semibold mb-1 block ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t("maxFreeSignals")}</label>
+                      <input type="number" min="0" value={siteSettings.max_free_signals} onChange={(e) => setSiteSettings({ ...siteSettings, max_free_signals: e.target.value })} className={`w-full px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                    </div>
                   </div>
-                ))}
+                  <button onClick={saveSiteSettings} className="mt-4 bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors">{t("saveSettings")}</button>
+                </div>
               </div>
             )}
 

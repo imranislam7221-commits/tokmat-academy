@@ -30,6 +30,9 @@ export async function POST(req: Request) {
     }
 
     // Real LemonSqueezy checkout
+    // Redirect base: env -> request origin (localhost fallback bad — deployed domain e kaj korbe)
+    const origin = new URL(req.url).origin;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
     const res = await fetch(`https://api.lemonsqueezy.com/v1/checkouts`, {
       method: "POST",
       headers: {
@@ -41,7 +44,7 @@ export async function POST(req: Request) {
         data: {
           type: "checkouts",
           attributes: {
-            product_options: { redirect_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard?checkout=success&product=${product}` },
+            product_options: { redirect_url: `${baseUrl}/dashboard?checkout=success&product=${product}` },
           },
           relationships: {
             store: { data: { type: "stores", id: storeId } },

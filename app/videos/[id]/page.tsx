@@ -32,6 +32,10 @@ export default function VideoDetailPage() {
   const [activeLesson, setActiveLesson] = useState(1)
   const lessonSrc = video?.video_url || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
 
+  // YouTube link hole embed player, nahole direct video tag
+  const ytMatch = lessonSrc?.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,20})/)
+  const isEmbed = !!ytMatch || /iframe|embed/i.test(lessonSrc || "")
+
   // Guard: video approved na hole access nai
   useEffect(() => {
     fetch("/api/video-requests", { cache: "no-store", credentials: "include" })
@@ -95,21 +99,32 @@ export default function VideoDetailPage() {
           ← {t("backToVideos") || "Back to Videos"}
         </Link>
 
-        {/* Player — admin-set video URL (admin panel e change kora jay) */}
+        {/* Player — admin-set video URL (mp4 direct playback, YouTube auto-embed) */}
         <div className="relative aspect-video rounded-2xl overflow-hidden bg-black mb-6 shadow-2xl">
-          <video
-            key={`${activeLesson}-${lessonSrc}`}
-            className="w-full h-full"
-            controls
-            autoPlay
-            poster={video.img}
-            src={lessonSrc}
-          />
+          {ytMatch ? (
+            <iframe
+              key={`${activeLesson}-${lessonSrc}`}
+              className="w-full h-full"
+              src={`https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`}
+              title={video.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <video
+              key={`${activeLesson}-${lessonSrc}`}
+              className="w-full h-full"
+              controls
+              autoPlay
+              poster={video.img}
+              src={lessonSrc}
+            />
+          )}
         </div>
 
         {/* Info */}
         <h1 className={`text-2xl md:text-3xl font-extrabold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>{video.title}</h1>
-        <p className={`mb-6 ${isDark ? "text-gray-400" : "text-gray-600"}`}>{video.desc}</p>
+        <p className={`mb-6 ${isDark ? "text-gray-400" : "text-gray-600"}`}>{video.description || video.desc}</p>
 
         <div className={`rounded-2xl border p-6 ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"}`}>
           <h2 className={`font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>Lessons</h2>

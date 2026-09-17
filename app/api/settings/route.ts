@@ -12,6 +12,10 @@ const PUBLIC_KEYS = [
   "offer_subtitle",
   "offer_deadline",
   "offer_cta_text",
+  "site_name",
+  "support_email",
+  "telegram_link",
+  "max_free_signals",
 ];
 
 async function ensureTable() {
@@ -32,6 +36,10 @@ const DEFAULTS: Record<string, string> = {
   offer_subtitle: "Premium Signals Discount Ends Soon!",
   offer_deadline: "",
   offer_cta_text: "Join Now — It's Free",
+  site_name: "Tokmat Academy",
+  support_email: "support@tokmatacademy.com",
+  telegram_link: "https://t.me/TokmatSignal",
+  max_free_signals: "3",
 };
 
 export async function GET() {
