@@ -12,7 +12,7 @@ async function ensureTable() {
     CREATE TABLE IF NOT EXISTS videos (
       id SERIAL PRIMARY KEY,
       title TEXT NOT NULL,
-      desc TEXT NOT NULL DEFAULT '',
+      description TEXT NOT NULL DEFAULT '',
       lessons INTEGER NOT NULL DEFAULT 1,
       dur TEXT NOT NULL DEFAULT '',
       price TEXT NOT NULL DEFAULT '$5',
@@ -49,12 +49,12 @@ export async function GET() {
       for (let i = 0; i < DEFAULT_VIDEOS.length; i++) {
         const v = DEFAULT_VIDEOS[i];
         await pool.query(
-          `INSERT INTO videos (title, desc, lessons, dur, price, img, video_url, sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          `INSERT INTO videos (title, description, lessons, dur, price, img, video_url, sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
           [v.title, v.desc, v.lessons, v.dur, v.price, v.img, v.video_url, i]
         );
       }
     }
-    const res = await pool.query(`SELECT id, title, desc, lessons, dur, price, img, video_url, sort_order FROM videos ORDER BY sort_order ASC, id ASC`);
+    const res = await pool.query(`SELECT id, title, description, lessons, dur, price, img, video_url, sort_order FROM videos ORDER BY sort_order ASC, id ASC`);
     return NextResponse.json({ ok: true, videos: res.rows });
   } catch (e) {
     console.error("videos GET error:", e);
@@ -69,12 +69,15 @@ export async function POST(req: Request) {
   }
   try {
     await ensureTable();
-    const { title, desc, lessons, dur, price, img, video_url, sort_order } = await req.json();
+    const body_ = await req.json();
+    // frontend "desc" pathay — DB column "description"
+    const { title, desc, description, lessons, dur, price, img, video_url, sort_order } = body_;
     if (!title) return NextResponse.json({ ok: false, error: "Title required" }, { status: 400 });
+    const descVal = description ?? desc ?? "";
     const maxRes = await pool.query(`SELECT COALESCE(MAX(sort_order), -1) + 1 AS next FROM videos`);
     const res = await pool.query(
-      `INSERT INTO videos (title, desc, lessons, dur, price, img, video_url, sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-      [title, desc || "", Number(lessons) || 1, dur || "", price || "$5", img || "", video_url || "", sort_order ?? maxRes.rows[0].next]
+      `INSERT INTO videos (title, description, lessons, dur, price, img, video_url, sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [title, descVal, Number(lessons) || 1, dur || "", price || "$5", img || "", video_url || "", sort_order ?? maxRes.rows[0].next]
     );
     return NextResponse.json({ ok: true, video: res.rows[0] });
   } catch (e) {
@@ -93,7 +96,9 @@ export async function PATCH(req: Request) {
     const body = await req.json();
     const { id, ...fields } = body;
     if (!id) return NextResponse.json({ ok: false, error: "Video id required" }, { status: 400 });
-    const allowed = ["title", "desc", "lessons", "dur", "price", "img", "video_url", "sort_order"];
+    // frontend "desc" pathay — DB column "description"
+    if ("desc" in fields) { fields.description = fields.desc; delete fields.desc; }
+    const allowed = ["title", "description", "lessons", "dur", "price", "img", "video_url", "sort_order"];
     const sets: string[] = [];
     const vals: any[] = [];
     let i = 1;
