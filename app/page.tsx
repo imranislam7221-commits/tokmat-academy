@@ -627,11 +627,16 @@ export default function Home() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { icon: "📡", title: t("signalsTitle"), desc: t("signalsDesc"), gradient: "from-blue-500 to-blue-600", glow: "shadow-blue-500/20 hover:shadow-blue-500/40", href: "/news-analysis" },
-              { icon: "📚", title: t("educationTitle"), desc: t("educationDesc"), gradient: "from-purple-500 to-purple-600", glow: "shadow-purple-500/20 hover:shadow-purple-500/40", href: "/education" },
+              { icon: "📚", title: t("educationTitle"), desc: t("educationDesc"), gradient: "from-purple-500 to-purple-600", glow: "shadow-purple-500/20 hover:shadow-purple-500/40", href: "/videos", demo: true },
               { icon: "✅", title: t("resultsTitle"), desc: t("resultsDesc"), gradient: "from-green-500 to-green-600", glow: "shadow-green-500/20 hover:shadow-green-500/40", href: "/results" },
               { icon: "🎧", title: t("supportTitle"), desc: t("supportDesc"), gradient: "from-orange-500 to-orange-600", glow: "shadow-orange-500/20 hover:shadow-orange-500/40", href: "/faq" },
-            ].map((feature, i) => (
-              <a key={i} href={feature.href} className={`group rounded-2xl p-8 backdrop-blur-xl border transition-all hover:shadow-xl hover:scale-105 cursor-pointer ${isDark ? "bg-white/5 border-white/10 hover:bg-white/10" : "bg-white/60 border-white/30 hover:bg-white/80"}`}>
+            ].map((feature: any, i: number) => (
+              <a
+                key={i}
+                href={feature.href}
+                onClick={(e) => { if (feature.demo) { e.preventDefault(); setDemoOpen(true); } }}
+                className={`group rounded-2xl p-8 backdrop-blur-xl border transition-all hover:shadow-xl hover:scale-105 cursor-pointer ${isDark ? "bg-white/5 border-white/10 hover:bg-white/10" : "bg-white/60 border-white/30 hover:bg-white/80"}`}
+              >
                 <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 text-2xl`}>
                   {feature.icon}
                 </div>
