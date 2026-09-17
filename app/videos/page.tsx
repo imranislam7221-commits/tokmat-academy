@@ -22,6 +22,18 @@ export default function VideosPage() {
   const [hasFullAccess, setHasFullAccess] = useState(false)
   useEffect(()=>{ fetch("/api/video-requests").then(r=>r.json()).then(j=>{ if(j.ok){ setMyRequests(j.requests||[]); setHasFullAccess(!!j.fullAccess || (j.requests||[]).some((r:any)=> r.video_id==="full_access" && r.status==="approved"))}}).catch(()=>{}) }, [])
   const getStatus = (vid:string) => myRequests.find((r:any)=> String(r.video_id)===String(vid))?.status
+  const getRequestId = (vid:string) => myRequests.find((r:any)=> String(r.video_id)===String(vid))?.id
+  const cancelRequest = async (vid:string) => {
+    const id = getRequestId(vid)
+    if (!id) return
+    try {
+      const res = await fetch(`/api/video-requests?id=${id}`, { method: "DELETE" })
+      const j = await res.json()
+      const msg = j.ok ? "Request cancelled" : (j.error || "Failed")
+      const el=document.createElement("div"); el.textContent=msg; el.className=`fixed bottom-6 right-6 ${j.ok?"bg-green-600":"bg-red-600"} text-white px-4 py-2 rounded-xl shadow-lg z-[60] text-sm font-bold`; document.body.appendChild(el); setTimeout(()=>el.remove(),2500)
+      if (j.ok) setMyRequests((prev:any)=> prev.filter((r:any)=> String(r.id)!==String(id)))
+    } catch {}
+  }
   const handleRequest = async (v:any) => {
     try {
       const me = await fetch("/api/auth", { cache: "no-store", credentials: "include" }).then(r=>r.json());
@@ -93,7 +105,12 @@ export default function VideosPage() {
                   // Full Access active hole sob video Watch Now
                   if (hasFullAccess) return <button onClick={()=> window.location.href=`/videos/${v.id}` } className="block w-full font-bold text-sm py-2.5 rounded-xl text-center bg-green-600 hover:bg-green-700 text-white">▶ {t("watchNow")}</button>;
                   if (st==="approved") return <button onClick={()=> window.location.href=`/videos/${v.id}` } className="block w-full font-bold text-sm py-2.5 rounded-xl text-center bg-green-600 hover:bg-green-700 text-white">▶ {t("watchNow")}</button>;
-                  if (st==="pending") return <button disabled className="block w-full font-bold text-sm py-2.5 rounded-xl text-center bg-yellow-500 text-white opacity-80 cursor-not-allowed">⏳ {t("pendingApproval")}</button>;
+                  if (st==="pending") return (
+                    <div className="flex gap-1.5">
+                      <button disabled className="flex-1 font-bold text-sm py-2.5 rounded-xl text-center bg-yellow-500 text-white opacity-80 cursor-not-allowed">⏳ {t("pendingApproval")}</button>
+                      <button onClick={()=> cancelRequest(String(v.id))} title="Cancel request" className={`px-3 rounded-xl text-red-500 hover:bg-red-500/10 font-bold text-sm transition-colors ${isDark ? "border border-dark-600" : "border border-gray-200"}`}>✕</button>
+                    </div>
+                  );
                   return <button onClick={()=> handleRequest(v)} className={`block w-full font-bold text-sm py-2.5 rounded-xl text-center transition-colors ${isDark ? "bg-purple-600 hover:bg-purple-500 text-white" : "bg-purple-600 hover:bg-purple-700 text-white"}`}>{t("unlockVideo")} {v.price} - Request</button>;
                 })()}
               </div>

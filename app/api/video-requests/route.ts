@@ -75,3 +75,20 @@ export async function PATCH(req: Request) {
   await pool.query(`UPDATE video_requests SET status=$1 WHERE id=$2`, [status, id]);
   return NextResponse.json({ ok: true });
 }
+
+// Cancel — user sudhu nijer PENDING request cancel korte parbe; admin jekono delete korte parbe
+export async function DELETE(req: Request) {
+  const user = await getUser(req);
+  if (!user) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  await ensureTable();
+  const { searchParams } = new URL(req.url);
+  const id = Number(searchParams.get("id"));
+  if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
+  if (user.role === "admin") {
+    await pool.query(`DELETE FROM video_requests WHERE id=$1`, [id]);
+    return NextResponse.json({ ok: true });
+  }
+  const res = await pool.query(`DELETE FROM video_requests WHERE id=$1 AND user_id=$2 AND status='pending' RETURNING id`, [id, user.id]);
+  if (!res.rows.length) return NextResponse.json({ ok: false, error: "Not found or not cancelable" }, { status: 404 });
+  return NextResponse.json({ ok: true });
+}
