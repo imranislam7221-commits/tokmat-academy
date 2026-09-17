@@ -8,6 +8,40 @@ export const revalidate = 0;
 
 const ADMIN_EMAILS = ["maasum1231@gmail.com"];
 
+// ===== Login rate limiting (brute-force protection) =====
+// Per server instance in-memory map: email+IP -> { count, resetAt }
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const MAX_ATTEMPTS = 8;
+const WINDOW_MS = 15 * 60 * 1000; // 15 minute
+
+function loginKey(req: Request, email: string): string {
+  const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
+  return `${email.toLowerCase()}|${ip}`;
+}
+
+function isRateLimited(key: string): boolean {
+  const entry = loginAttempts.get(key);
+  if (!entry) return false;
+  if (Date.now() > entry.resetAt) {
+    loginAttempts.delete(key);
+    return false;
+  }
+  return entry.count >= MAX_ATTEMPTS;
+}
+
+function recordFailedLogin(key: string): void {
+  const entry = loginAttempts.get(key);
+  if (!entry || Date.now() > entry.resetAt) {
+    loginAttempts.set(key, { count: 1, resetAt: Date.now() + WINDOW_MS });
+  } else {
+    entry.count++;
+  }
+}
+
+function clearLoginAttempts(key: string): void {
+  loginAttempts.delete(key);
+}
+
 // Session cookie options
 const COOKIE_NAME = "tokmat_session";
 const SESSION_DAYS = 7;
@@ -222,12 +256,20 @@ export async function POST(req: Request) {
 
     // ===== LOGIN =====
     if (action === "login") {
+      // Brute-force protection: 15 min e 8 bar fail korle block
+      const rlKey = loginKey(req, emailNorm);
+      if (isRateLimited(rlKey)) {
+        return NextResponse.json({ ok: false, error: "Too many failed attempts. Try again in 15 minutes." }, { status: 429 });
+      }
+
       const res = await pool.query(`SELECT * FROM users WHERE email = $1`, [emailNorm]);
       let user = res.rows[0] as DbUser | undefined;
 
       if (!user || !(await bcrypt.compare(String(password), user.password_hash))) {
+        recordFailedLogin(rlKey);
         return NextResponse.json({ ok: false, error: "Invalid email or password" }, { status: 401 });
       }
+      clearLoginAttempts(rlKey);
       if (user.status === "Suspended") {
         return NextResponse.json({ ok: false, error: "Your account has been suspended. Contact support." }, { status: 403 });
       }

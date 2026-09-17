@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
 import { pool, initDb } from "@/lib/db";
-import { getUserByToken, COOKIE_NAME } from "../auth/route";
+import { getUserFromRequest } from "../auth/route";
 
 async function getUser(req: Request) {
-  const cookie = req.headers.get("cookie") || "";
-  const m = cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
-  if (!m) return null;
-  try { return await getUserByToken(m[1]); } catch { return null; }
+  try { return await getUserFromRequest(req); } catch { return null; }
 }
 
 async function ensureTable() {

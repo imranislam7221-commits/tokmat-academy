@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import { pool, initDb } from "@/lib/db";
-import { getUserByToken, COOKIE_NAME } from "../auth/route";
+import { getUserFromRequest } from "../auth/route";
 
 const MASTER_ADMIN = "maasum1231@gmail.com";
 
 async function requireAdmin(req: Request): Promise<{ ok: boolean; user?: any }> {
-  const cookie = req.headers.get("cookie") || "";
-  const match = cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
-  if (!match) return { ok: false };
   try {
-    const user = await getUserByToken(match[1]);
+    // Multi-cookie safe: sob tokmat_session cookie check kore first valid token nibe
+    const user = await getUserFromRequest(req);
     if (!user || user.role !== "admin") return { ok: false };
     return { ok: true, user };
   } catch {
