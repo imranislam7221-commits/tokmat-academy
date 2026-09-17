@@ -54,7 +54,55 @@ async function getUserByToken(token: string): Promise<DbUser | null> {
   return res.rows[0] || null;
 }
 
-export { getUserByToken, COOKIE_NAME };
+// Browser e ek name er ekadhik cookie thakte pare (apex + www, Secure + non-Secure).
+// Sob gulo token ber kori — logout sob delete korbe, GET sob check korbe.
+function extractAllTokens(cookieHeader: string | null): string[] {
+  if (!cookieHeader) return [];
+  const tokens: string[] = [];
+  const re = new RegExp(`(?:^|;\\s*)${COOKIE_NAME}=([^;]+)`, "g");
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(cookieHeader)) !== null) {
+    if (m[1] && !tokens.includes(m[1])) tokens.push(m[1]);
+  }
+  return tokens;
+}
+
+// FIRST valid token diye user return kori (multi-cookie safe)
+async function getUserFromRequest(req: Request): Promise<DbUser | null> {
+  const tokens = extractAllTokens(req.headers.get("cookie"));
+  for (const token of tokens) {
+    const user = await getUserByToken(token);
+    if (user) return user;
+  }
+  return null;
+}
+
+// Logout er por auto re-login block: request er sob token REVOKE kori.
+// Cookie ja thakuk na ken — DB te session thakle o delete hoye jabe.
+async function revokeRequestTokens(req: Request): Promise<void> {
+  const tokens = extractAllTokens(req.headers.get("cookie"));
+  if (tokens.length === 0) return;
+  await initDb();
+  await pool.query(`DELETE FROM sessions WHERE token = ANY($1::text[])`, [tokens]);
+}
+
+// Sob cookie variant clear kori — raw Set-Cookie headers (Next cookies API
+// ek name er jonno sudhu last set ta pathay, tai raw header use kora hoy).
+function clearAllCookieVariants(): string[] {
+  const expire = "Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0";
+  const base = "Path=/; HttpOnly; SameSite=Lax";
+  return [
+    `${COOKIE_NAME}=; ${base}; ${expire}`, // host-only (current host)
+    `${COOKIE_NAME}=; ${base}; ${expire}; Domain=tokmatacademy.online`, // apex domain
+    `${COOKIE_NAME}=; ${base}; ${expire}; Domain=www.tokmatacademy.online`, // www
+    `${COOKIE_NAME}=; ${base}; ${expire}; Secure`, // https variants
+    `${COOKIE_NAME}=; ${base}; ${expire}; Secure; Domain=tokmatacademy.online`,
+    `${COOKIE_NAME}=; ${base}; ${expire}; Secure; Domain=www.tokmatacademy.online`,
+    `${COOKIE_NAME}=; ${base}; ${expire}; Domain=localhost`, // local dev
+  ];
+}
+
+export { getUserByToken, getUserFromRequest, revokeRequestTokens, COOKIE_NAME };
 
 export async function POST(req: Request) {
   try {
@@ -214,6 +262,23 @@ export async function POST(req: Request) {
       return res;
     }
 
+    // ===== LOGOUT (BULLETPROOF) =====
+    if (action === "logout2") {
+      // 1) Request e je koyekta token ache sob DB theke delete (apex+www duita cookie thakle duitai)
+      await revokeRequestTokens(req);
+      // 2) User paoa gele tar SOB session revoke (onno device theke o logout hobe)
+      try {
+        const user = await getUserFromRequest(req);
+        if (user) await pool.query(`DELETE FROM sessions WHERE user_id = $1`, [user.id]);
+      } catch {}
+      // 3) Sob cookie variant clear (host-only, apex, www, Secure/non-Secure, localhost)
+      const res2 = NextResponse.json({ ok: true });
+      for (const c of clearAllCookieVariants()) {
+        res2.headers.append("Set-Cookie", c);
+      }
+      return res2;
+    }
+
     return NextResponse.json({ ok: false, error: "Unknown action" }, { status: 400 });
   } catch (e: any) {
     // Database not configured yet
@@ -226,21 +291,10 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   // Return current logged-in user - no cache
+  // Multi-cookie safe: request e je koyekta tokmat_session cookie ache sob check kori.
   try {
-    const cookie = req.headers.get("cookie") || "";
-    const match = cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
-    if (!match) {
-      const r = NextResponse.json({ ok: true, user: null });
-      r.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
-      return r;
-    }
-    const user = await getUserByToken(match[1]);
-    if (!user) {
-      const r = NextResponse.json({ ok: true, user: null });
-      r.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
-      return r;
-    }
-    const r = NextResponse.json({ ok: true, user: toSafeUser(user) });
+    const user = await getUserFromRequest(req);
+    const r = NextResponse.json({ ok: true, user: user ? toSafeUser(user) : null });
     r.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
     return r;
   } catch {

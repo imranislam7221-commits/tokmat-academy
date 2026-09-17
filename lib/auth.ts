@@ -31,6 +31,7 @@ export function isAdminEmail(email: string): boolean {
 }
 
 export async function logout() {
+  // 1) Firebase session clear (Google login er jonno)
   try {
     // @ts-ignore
     const { signOut } = await import("firebase/auth");
@@ -38,17 +39,20 @@ export async function logout() {
     const { auth } = await import("@/lib/firebase");
     await signOut(auth).catch(()=>{});
   } catch {}
+  // 2) Server-side logout — sob DB session revoke + sob cookie variant clear
   try {
     await fetch("/api/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       cache: "no-store",
-      body: JSON.stringify({ action: "logout" }),
+      body: JSON.stringify({ action: "logout2" }),
     });
   } catch {}
+  // 3) Local storage/session clear
   try { localStorage.clear(); sessionStorage.clear(); } catch {}
-  window.location.href = "/login";
+  // 4) redirect (replace — back button e logged-in page fire ashbe na)
+  window.location.replace("/login?loggedout=1");
 }
 
 export async function getRole(): Promise<UserRole | null> {

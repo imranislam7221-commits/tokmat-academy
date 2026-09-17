@@ -10,7 +10,21 @@ import { t as translate, type Locale } from "@/lib/translations"
 export default function LoginPage() {
 
   const [locale, setLocale] = useState<Locale>("en")
-  useEffect(() => { const p = new URLSearchParams(window.location.search); setLocale((p.get("locale") || "en") as Locale); }, [])
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    setLocale((p.get("locale") || "en") as Locale)
+    // Logout enforcement: ?loggedout=1 diye ashle jodi o kono stale session cookie fire theke, force revoke
+    if (p.get("loggedout") === "1") {
+      try { localStorage.clear(); sessionStorage.clear(); } catch {}
+      fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        cache: "no-store",
+        body: JSON.stringify({ action: "force_logout" }),
+      }).catch(() => {})
+    }
+  }, [])
   const { theme } = useTheme()
   const isDark = theme === "dark"
   const t = (key: string) => translate(locale, key)

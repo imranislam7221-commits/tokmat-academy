@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
+import { logout as authLogout } from "@/lib/auth"
 
 // Real user data - starts at 0, filled from DB
 const defaultUserData = {
@@ -334,7 +335,7 @@ export default function DashboardPage() {
                       <span className="flex items-center gap-2">📱 {t("twoFactorAuth")}</span>
                       <svg className="w-4 h-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                     </button>
-                    <button onClick={async()=>{ try{ await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"logout"}),credentials:"include",cache:"no-store"})}catch{}; try{localStorage.clear(); sessionStorage.clear();}catch{}; window.location.href="/login"; }} className="w-full flex items-center justify-between p-3 rounded-xl text-sm bg-red-50 hover:bg-red-100 text-red-600 transition-colors">
+                    <button onClick={() => authLogout()} className="w-full flex items-center justify-between p-3 rounded-xl text-sm bg-red-50 hover:bg-red-100 text-red-600 transition-colors">
                       <span className="flex items-center gap-2">🚪 {t("signOut")}</span>
                       <svg className="w-4 h-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                     </button>

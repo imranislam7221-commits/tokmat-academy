@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
+import { logout as authLogout } from "@/lib/auth"
 
 const demoUsers: any[] = [] // real users DB theke ase — demo list removed
 
@@ -130,7 +131,7 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-3">
             <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t("masterAdmin")}</span>
-            <button onClick={async () => { try { await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "logout" }), credentials: "include", cache: "no-store" }) } catch {}; try { localStorage.clear(); sessionStorage.clear(); } catch {}; window.location.href="/login"; }} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">{t("logout")}</button>
+            <button onClick={() => authLogout()} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">{t("logout")}</button>
           </div>
         </div>
       </nav>
