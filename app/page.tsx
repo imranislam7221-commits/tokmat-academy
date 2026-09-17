@@ -737,7 +737,8 @@ export default function Home() {
             ];
             const names = ["Ahmed R.", "Sarah M.", "Pierre L.", "John D.", "Ali H.", "Emma W.", "Mohammed K.", "David S.", "Fatima A.", "Carlos P.", "Linda T.", "Omar F.", "Sofia R.", "Kenji T.", "Nina P.", "Raj K.", "Elena V.", "Hassan M.", "Yuki S.", "Aisha K."];
             const countries = ["Saudi Arabia", "Malaysia", "France", "USA", "UAE", "UK", "Kuwait", "Canada", "Qatar", "Spain", "Germany", "Egypt", "Italy", "Japan", "Brazil", "India", "Russia", "Morocco", "Korea", "Indonesia"];
-            const profits = ["+$5,200", "+$3,800", "+$7,100", "+$2,400", "+$6,500", "+$4,900", "+$8,200", "+$3,100", "+$5,800", "+$9,300", "+$2,900", "+$6,100", "+$4,400", "+$7,800", "+$3,600", "+$5,500", "+$8,900", "+$4,200", "+$6,800", "+$3,900"];
+            // Khuchra profit figure — round number na, jate realistic lage
+            const profits = ["+$5,193", "+$3,847", "+$7,126", "+$2,372", "+$6,534", "+$4,918", "+$8,241", "+$3,057", "+$5,829", "+$9,346", "+$2,874", "+$6,152", "+$4,381", "+$7,793", "+$3,628", "+$5,467", "+$8,912", "+$4,235", "+$6,749", "+$3,916"];
             const allReviews = Array.from({ length: 120 }, (_, i) => ({
               text: baseTexts[i % baseTexts.length],
               name: names[i % names.length],
