@@ -112,6 +112,25 @@ export async function POST(req: Request) {
 
     await initDb();
 
+    // ===== LOGOUT (BULLETPROOF) — email/password check er AGE rakha hoyeche,
+    // ===== karon logout request e email/password thake na. Age ei check er
+    // ===== pore chilo, tai logout request 400 kheto ar cookie clear hoto na!
+    if (action === "logout" || action === "logout2" || action === "force_logout") {
+      // 1) Request e je koyekta token ache sob DB theke delete (apex+www duita cookie thakle duitai)
+      await revokeRequestTokens(req);
+      // 2) User paoa gele tar SOB session revoke (onno device theke o logout hobe)
+      try {
+        const user = await getUserFromRequest(req);
+        if (user) await pool.query(`DELETE FROM sessions WHERE user_id = $1`, [user.id]);
+      } catch {}
+      // 3) Sob cookie variant clear (host-only, apex, www, Secure/non-Secure, localhost)
+      const res = NextResponse.json({ ok: true });
+      for (const c of clearAllCookieVariants()) {
+        res.headers.append("Set-Cookie", c);
+      }
+      return res;
+    }
+
     // ===== GOOGLE LOGIN (Gmail) - save to DB =====
     if (action === "google") {
       if (!emailNorm || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
@@ -236,47 +255,6 @@ export async function POST(req: Request) {
         user: safe,
         redirect: safe.role === "admin" ? "/admin" : "/dashboard",
       }, { headers: { "Set-Cookie": cookieHeader(token, expires, req) } });
-    }
-
-    // ===== LOGOUT =====
-    if (action === "logout") {
-      const cookie = req.headers.get("cookie") || "";
-      const match = cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
-      if (match) {
-        const token = match[1];
-        // Robust: get user_id directly from sessions (even if expired) then delete all user sessions
-        try {
-          const sess = await pool.query(`SELECT user_id FROM sessions WHERE token = $1`, [token]);
-          const uid = (sess.rows[0] as any)?.user_id;
-          if (uid) await pool.query(`DELETE FROM sessions WHERE user_id = $1`, [uid]);
-        } catch {}
-        await pool.query(`DELETE FROM sessions WHERE token = $1`, [token]).catch(() => {});
-      }
-      const res = NextResponse.json({ ok: true });
-      // Use cookies API + raw headers to guarantee clear on both http/https
-      res.cookies.set(COOKIE_NAME, "", { path: "/", httpOnly: true, sameSite: "lax", maxAge: 0, expires: new Date(0) });
-      res.cookies.set(COOKIE_NAME, "", { path: "/", httpOnly: true, sameSite: "lax", maxAge: 0, expires: new Date(0), secure: true });
-      res.cookies.set(COOKIE_NAME, "", { path: "/", httpOnly: true, sameSite: "lax", maxAge: 0, expires: new Date(0), secure: false });
-      res.headers.append("Set-Cookie", `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`);
-      res.headers.append("Set-Cookie", `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure`);
-      return res;
-    }
-
-    // ===== LOGOUT (BULLETPROOF) =====
-    if (action === "logout2") {
-      // 1) Request e je koyekta token ache sob DB theke delete (apex+www duita cookie thakle duitai)
-      await revokeRequestTokens(req);
-      // 2) User paoa gele tar SOB session revoke (onno device theke o logout hobe)
-      try {
-        const user = await getUserFromRequest(req);
-        if (user) await pool.query(`DELETE FROM sessions WHERE user_id = $1`, [user.id]);
-      } catch {}
-      // 3) Sob cookie variant clear (host-only, apex, www, Secure/non-Secure, localhost)
-      const res2 = NextResponse.json({ ok: true });
-      for (const c of clearAllCookieVariants()) {
-        res2.headers.append("Set-Cookie", c);
-      }
-      return res2;
     }
 
     return NextResponse.json({ ok: false, error: "Unknown action" }, { status: 400 });
