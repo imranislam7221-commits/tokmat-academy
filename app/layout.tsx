@@ -1,5 +1,6 @@
 import { ThemeProvider } from "@/components/ThemeProvider"
 import { Header } from "@/components/Header"
+import { FloatingChat } from "@/components/FloatingChat"
 import "./globals.css"
 
 export const metadata = {
@@ -26,6 +27,7 @@ export default async function RootLayout({ children, params }: { children: React
           <main className="pt-20">
             {children}
           </main>
+          <FloatingChat />
         </ThemeProvider>
       </body>
     </html>
