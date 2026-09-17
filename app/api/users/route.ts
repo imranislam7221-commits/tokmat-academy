@@ -24,9 +24,12 @@ export async function GET(req: Request) {
   }
   try {
     await initDb();
+    // Admin ra sobar opore, tarpor baki user ra (notun age)
     const res = await pool.query(
       `SELECT id, first_name, last_name, email, role, plan, status, balance, created_at, last_login
-       FROM users ORDER BY created_at DESC LIMIT 500`
+       FROM users
+       ORDER BY CASE WHEN role = 'admin' THEN 0 ELSE 1 END, created_at DESC
+       LIMIT 500`
     );
     const users = res.rows.map((u: any) => ({
       id: u.id,
