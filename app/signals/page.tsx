@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
+import { useSiteSettings } from "@/lib/useSiteSettings"
 
 const fallbackSignals = [
   { pair: "EUR/USD", dir: "BUY", entry: "1.0850", tp: "1.0920", sl: "1.0810", profit: "+0.64%", status: "TP Hit" },
@@ -17,6 +18,17 @@ export default function SignalsPage() {
   const [signals, setSignals] = useState(fallbackSignals)
   const [locale, setLocale] = useState<Locale>("en")
   useEffect(() => { const p = new URLSearchParams(window.location.search); setLocale((p.get("locale") || "en") as Locale); }, [])
+  const { maxFreeSignals } = useSiteSettings()
+  const [isPremiumUser, setIsPremiumUser] = useState(false)
+  useEffect(() => {
+    // Premium user check — premium hole sob signal, na hole limited
+    fetch("/api/auth", { cache: "no-store", credentials: "include" }).then(r=>r.json()).then(j=>{
+      if (j.ok && j.user) {
+        const plan = (j.user.plan || "").toLowerCase()
+        setIsPremiumUser(j.user.role === "admin" || plan.includes("premium") || plan.includes("supreme") || plan.includes("full"))
+      }
+    }).catch(()=>{})
+  }, [])
   useEffect(() => {
     let alive = true
     const load = async () => {
@@ -50,8 +62,15 @@ export default function SignalsPage() {
         </div>
       </section>
       <section className="max-w-7xl mx-auto px-4 pb-16 -mt-6">
+        {/* Free limit notice */}
+        {!isPremiumUser && signals.length > maxFreeSignals && (
+          <div className="mb-6 text-center rounded-2xl p-5 border bg-gradient-to-r from-blue-600/10 to-purple-600/10 border-blue-500/30">
+            <p className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>🔒 Showing {maxFreeSignals} free signals — {signals.length - maxFreeSignals} more hidden</p>
+            <a href="/register" className="inline-block mt-3 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-colors">Get Premium — See All Signals</a>
+          </div>
+        )}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {signals.map((s, i) => (
+          {(isPremiumUser ? signals : signals.slice(0, maxFreeSignals)).map((s, i) => (
             <div key={i} className={`rounded-2xl p-5 border transition-all hover:shadow-lg ${isDark ? "bg-dark-800 border-dark-700 hover:border-blue-500/30" : "bg-white border-gray-100 hover:border-blue-200 shadow-sm"}`}>
               <div className="flex items-center justify-between mb-4">
                 <div className={`font-bold text-lg ${isDark ? "text-white" : "text-gray-900"}`}>{s.pair}</div>

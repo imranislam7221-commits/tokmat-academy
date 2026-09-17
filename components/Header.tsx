@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import { useTheme } from "@/components/ThemeProvider"
 import { t, locales, type Locale } from "@/lib/translations"
 import { logout as authLogout } from "@/lib/auth"
+import { useSiteSettings } from "@/lib/useSiteSettings"
 
 function getLocaleFromURL(): Locale {
   if (typeof window === "undefined") return "en"
@@ -31,6 +32,7 @@ function getNavLinks(locale: Locale) {
 
 export function Header({ locale: initialLocale }: { locale: string }) {
   const { theme } = useTheme()
+  const { siteName } = useSiteSettings()
   const pathname = usePathname()
   const isAdminPage = pathname?.startsWith("/admin")
   const [currentLocale, setCurrentLocale] = useState<Locale>(initialLocale as Locale)
@@ -88,7 +90,7 @@ export function Header({ locale: initialLocale }: { locale: string }) {
             </div>
             <div className="flex flex-col leading-none">
               <span className={`text-xl sm:text-2xl font-extrabold tracking-tight ${!scrolled ? "text-white" : isDark ? "text-white" : "text-gray-900"}`}>
-                Tokmat <span className={!scrolled ? "text-blue-400" : "text-blue-600"}>Academy</span>
+                {siteName.split(" ")[0]} <span className={!scrolled ? "text-blue-400" : "text-blue-600"}>{siteName.split(" ").slice(1).join(" ") || "Academy"}</span>
               </span>
               <span className={`text-[10px] font-medium tracking-wider uppercase hidden sm:block leading-none ${!scrolled ? "text-white/60" : "text-gray-400"}`}>
                 Forex Education

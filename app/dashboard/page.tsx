@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useTheme } from "@/components/ThemeProvider"
+import { useSiteSettings } from "@/lib/useSiteSettings"
 import { t as translate, type Locale } from "@/lib/translations"
 import { logout as authLogout } from "@/lib/auth"
 
@@ -23,6 +24,7 @@ const demoHistory: any[] = []
 
 export default function DashboardPage() {
   const { theme } = useTheme()
+  const { telegramLink } = useSiteSettings()
   const isDark = theme === "dark"
   const [locale, setLocale] = useState<Locale>("en")
   const t = (key: string) => translate(locale, key)
@@ -174,7 +176,7 @@ export default function DashboardPage() {
                   <h3 className={`text-lg font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>{t("quickActions")}</h3>
                   <div className="space-y-2">
                     {[
-                      { label: t("joinTelegram"), desc: t("getSignalsOnTelegram"), icon: "📱", href: "https://t.me/TokmatSignal", color: "bg-blue-50 hover:bg-blue-100 text-blue-700" },
+                      { label: t("joinTelegram"), desc: t("getSignalsOnTelegram"), icon: "📱", href: telegramLink, color: "bg-blue-50 hover:bg-blue-100 text-blue-700" },
                       { label: t("educationCenter"), desc: t("learnTradingStrategies"), icon: "📚", href: "/education", color: "bg-purple-50 hover:bg-purple-100 text-purple-700" },
                       { label: t("viewResultsDash"), desc: t("seeTrackRecord"), icon: "🏆", href: "/results", color: "bg-green-50 hover:bg-green-100 text-green-700" },
                     ].map((action, i) => (

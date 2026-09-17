@@ -1,23 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useSiteSettings } from "@/lib/useSiteSettings"
 
 // Floating Live Chat button — sob page e dan pashe niche.
 // Name "Live Chat" dekhabe, click korle Telegram e open hoy.
-// Telegram link site_settings theke ase (admin Settings e change korte parbe),
-// na thakle default link use hoy.
+// Telegram link site_settings theke ase (admin Settings e change korte parbe).
 
 export function FloatingChat() {
-  const [tgLink, setTgLink] = useState("https://t.me/TokmatSignal")
-
-  useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((j) => {
-        if (j.ok && j.settings?.telegram_link) setTgLink(j.settings.telegram_link)
-      })
-      .catch(() => {})
-  }, [])
+  const { telegramLink: tgLink } = useSiteSettings()
 
   return (
     <a

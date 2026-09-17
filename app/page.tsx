@@ -5,6 +5,7 @@ import Image from "next/image"
 import { useEffect, useState, useRef } from "react"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
+import { useSiteSettings } from "@/lib/useSiteSettings"
 
 // Animated Counter Component - counts up when page loads
 function AnimatedCounter({ end, duration = 2000, suffix = "" }: { end: number; duration?: number; suffix?: string }) {
@@ -36,6 +37,7 @@ export default function Home() {
   const [visibleReviews, setVisibleReviews] = useState(6)
   
   const { theme } = useTheme()
+  const { telegramLink } = useSiteSettings()
   const isDark = theme === "dark"
 
   const t = (key: string) => translate(locale, key)
@@ -147,7 +149,7 @@ export default function Home() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-24">
           {/* Join Telegram + YouTube Buttons - Top Center */}
           <div className="flex flex-col sm:flex-row justify-center items-center gap-12 sm:gap-40 mb-8 sm:-translate-x-8">
-            <a href="https://t.me/TokmatSignal" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all duration-300 border border-white/20">
+            <a href={telegramLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 transition-all duration-300 border border-white/20">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
               {t("joinTelegram")}
             </a>
@@ -215,7 +217,7 @@ export default function Home() {
                 ].map((v) => (
                   <a
                     key={v.id}
-                    href="/videos"
+                    href={`/videos?locale=${locale}`}
                     className="group relative rounded-xl overflow-hidden border border-white/10 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105 text-left"
                   >
                     <div className="relative aspect-video overflow-hidden">
@@ -235,7 +237,7 @@ export default function Home() {
                 ))}
               </div>
               {/* See All Videos Link */}
-              <Link href="/videos" className="block text-center mt-5 text-blue-400 hover:text-blue-300 font-semibold text-sm transition-colors">
+              <Link href={`/videos?locale=${locale}`} className="block text-center mt-5 text-blue-400 hover:text-blue-300 font-semibold text-sm transition-colors">
                 {t("seeAllVideos")} →
               </Link>
             </div>
@@ -771,7 +773,7 @@ export default function Home() {
             <div>
               <h4 className="text-white font-semibold mb-4">{t("footerConnect")}</h4>
               <div className="flex items-center gap-3">
-                <a href="https://t.me/TokmatSignal" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-dark-800 flex items-center justify-center hover:bg-blue-600 transition-colors group">
+                <a href={telegramLink} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-dark-800 flex items-center justify-center hover:bg-blue-600 transition-colors group">
                   <svg className="w-5 h-5 text-gray-400 group-hover:text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121L8.32 13.617l-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.94z"/></svg>
                 </a>
                 <a href="https://youtube.com/@tokmatsecreteducational?si=XGfM-dXS66D40dEy" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-dark-800 flex items-center justify-center hover:bg-red-600 transition-colors group">
