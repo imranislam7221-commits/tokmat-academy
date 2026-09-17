@@ -25,7 +25,7 @@ export function FloatingChat() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Live Chat"
-      className="fixed bottom-8 right-5 z-50 group flex items-center gap-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xs pl-3 pr-4 py-2 rounded-full shadow-2xl shadow-green-500/40 hover:shadow-green-500/60 hover:scale-105 transition-all duration-300"
+      className="fixed bottom-8 right-5 z-50 group flex items-center gap-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xs pl-2.5 pr-3 py-2 rounded-full shadow-2xl shadow-green-500/40 hover:shadow-green-500/60 hover:scale-105 transition-all duration-300"
     >
       {/* Online dot */}
       <span className="relative flex h-2 w-2">
