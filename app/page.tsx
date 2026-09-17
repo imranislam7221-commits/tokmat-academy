@@ -68,6 +68,45 @@ export default function Home() {
   const [signals, setSignals] = useState<any[]>([])
   const [marketData, setMarketData] = useState<any[]>([])
 
+  // Limited Offer banner — admin panel theke control hoy (/api/settings)
+  const [offer, setOffer] = useState({
+    enabled: true,
+    title: "LIMITED OFFER",
+    subtitle: "Premium Signals Discount Ends Soon!",
+    deadline: "",
+    ctaText: "Join Now — It's Free",
+    countdown: { days: "00", hours: "00", mins: "00", secs: "00" },
+  })
+
+  // Offer settings load + real countdown tick
+  useEffect(() => {
+    fetch("/api/settings").then(r=>r.json()).then(j=>{
+      if (j.ok && j.settings) {
+        setOffer((prev) => ({ ...prev, enabled: j.settings.offer_enabled !== "false", title: j.settings.offer_title || prev.title, subtitle: j.settings.offer_subtitle || prev.subtitle, deadline: j.settings.offer_deadline || "", ctaText: j.settings.offer_cta_text || prev.ctaText }))
+      }
+    }).catch(()=>{})
+  }, [])
+
+  useEffect(() => {
+    if (!offer.deadline) return
+    const tick = () => {
+      const diff = new Date(offer.deadline).getTime() - Date.now()
+      if (!isFinite(diff) || diff <= 0) {
+        setOffer((prev) => ({ ...prev, countdown: { days: "00", hours: "00", mins: "00", secs: "00" } }))
+        return
+      }
+      const d = Math.floor(diff / 86400000)
+      const h = Math.floor((diff % 86400000) / 3600000)
+      const m = Math.floor((diff % 3600000) / 60000)
+      const s = Math.floor((diff % 60000) / 1000)
+      const pad = (n: number) => String(n).padStart(2, "0")
+      setOffer((prev) => ({ ...prev, countdown: { days: pad(d), hours: pad(h), mins: pad(m), secs: pad(s) } }))
+    }
+    tick()
+    const iv = setInterval(tick, 1000)
+    return () => clearInterval(iv)
+  }, [offer.deadline])
+
   // Fetch live market data + signals from API
   useEffect(() => {
     const fetchMarket = async () => {
@@ -454,7 +493,8 @@ export default function Home() {
         </div>
       </section>
       
-      {/* ===== Limited Offer Countdown Banner ===== */}      {/* ===== Limited Offer Countdown Banner ===== */}
+      {/* ===== Limited Offer Countdown Banner (admin-controlled) ===== */}
+      {offer.enabled && (
       <section className="py-8 px-4">
         <div className="max-w-6xl mx-auto">
           <div className={`rounded-2xl overflow-hidden border backdrop-blur-xl transition-all hover:shadow-xl ${isDark ? "bg-white/5 border-white/10" : "bg-white/60 border-white/30"}`}>
@@ -463,39 +503,32 @@ export default function Home() {
               <div className="bg-gradient-to-r from-red-600 to-red-700 p-8 flex items-center gap-4">
                 <div className="text-5xl">⏰</div>
                 <div>
-                  <h3 className="text-white font-extrabold text-2xl">LIMITED OFFER</h3>
-                  <p className="text-red-100 text-sm mt-1">Premium Signals Discount Ends Soon!</p>
+                  <h3 className="text-white font-extrabold text-2xl">{offer.title}</h3>
+                  <p className="text-red-100 text-sm mt-1">{offer.subtitle}</p>
                 </div>
               </div>
-              {/* Right - Countdown */}
+              {/* Right - Countdown (real, admin-set deadline theke) */}
               <div className="p-8 flex items-center justify-center gap-6">
-                <div className="text-center">
-                  <div className={`text-3xl font-extrabold ${isDark ? "text-white" : "text-gray-900"}`}>02</div>
-                  <div className={`text-xs uppercase ${isDark ? "text-gray-500" : "text-gray-400"}`}>Days</div>
-                </div>
-                <div className={`text-2xl ${isDark ? "text-gray-600" : "text-gray-300"}`}>:</div>
-                <div className="text-center">
-                  <div className={`text-3xl font-extrabold ${isDark ? "text-white" : "text-gray-900"}`}>14</div>
-                  <div className={`text-xs uppercase ${isDark ? "text-gray-500" : "text-gray-400"}`}>Hours</div>
-                </div>
-                <div className={`text-2xl ${isDark ? "text-gray-600" : "text-gray-300"}`}>:</div>
-                <div className="text-center">
-                  <div className={`text-3xl font-extrabold ${isDark ? "text-white" : "text-gray-900"}`}>37</div>
-                  <div className={`text-xs uppercase ${isDark ? "text-gray-500" : "text-gray-400"}`}>Mins</div>
-                </div>
-                <div className={`text-2xl ${isDark ? "text-gray-600" : "text-gray-300"}`}>:</div>
-                <div className="text-center">
-                  <div className={`text-3xl font-extrabold ${isDark ? "text-white" : "text-gray-900"}`}>52</div>
-                  <div className={`text-xs uppercase ${isDark ? "text-gray-500" : "text-gray-400"}`}>Secs</div>
-                </div>
+                {[
+                  { v: offer.countdown.days, label: "Days" },
+                  { v: offer.countdown.hours, label: "Hours" },
+                  { v: offer.countdown.mins, label: "Mins" },
+                  { v: offer.countdown.secs, label: "Secs" },
+                ].map((u, i) => (
+                  <div key={i} className="text-center">
+                    <div className={`text-3xl font-extrabold ${isDark ? "text-white" : "text-gray-900"}`}>{u.v}</div>
+                    <div className={`text-xs uppercase ${isDark ? "text-gray-500" : "text-gray-400"}`}>{u.label}</div>
+                  </div>
+                )).flatMap((el, i) => (i === 0 ? [el] : [ <div key={`sep-${i}`} className={`text-2xl ${isDark ? "text-gray-600" : "text-gray-300"}`}>:</div>, el ]))}
                 <Link href="/register" className="ml-4 bg-red-600 text-white font-bold px-6 py-3 rounded-full hover:bg-red-700 transition-all shadow-lg shadow-red-500/20">
-                  {t("joinNow")}
+                  {offer.ctaText}
                 </Link>
               </div>
             </div>
           </div>
         </div>
       </section>
+      )}
 
       {/* ===== Features Section ===== */}
       <section id="features" className="py-24 px-4">

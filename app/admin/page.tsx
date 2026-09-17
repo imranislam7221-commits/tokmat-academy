@@ -31,6 +31,33 @@ export default function AdminDashboard() {
   const [showVideoForm, setShowVideoForm] = useState(false)
   const [editingVideo, setEditingVideo] = useState<any>(null)
   const [videoForm, setVideoForm] = useState({ title: "", desc: "", lessons: "5", dur: "", price: "$5", img: "", video_url: "" })
+  // Limited Offer banner settings (site_settings table theke)
+  const [offerSettings, setOfferSettings] = useState({ enabled: true, title: "", subtitle: "", deadline: "", ctaText: "" })
+  const [offerSaving, setOfferSaving] = useState(false)
+
+  useEffect(() => {
+    fetch("/api/settings").then(r=>r.json()).then(j=>{
+      if (j.ok && j.settings) {
+        setOfferSettings({
+          enabled: j.settings.offer_enabled !== "false",
+          title: j.settings.offer_title || "",
+          subtitle: j.settings.offer_subtitle || "",
+          deadline: j.settings.offer_deadline ? j.settings.offer_deadline.slice(0, 16) : "",
+          ctaText: j.settings.offer_cta_text || "",
+        })
+      }
+    }).catch(()=>{})
+  }, [])
+
+  const saveOfferSettings = async () => {
+    setOfferSaving(true)
+    try {
+      const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ offer_enabled: String(offerSettings.enabled), offer_title: offerSettings.title, offer_subtitle: offerSettings.subtitle, offer_deadline: offerSettings.deadline ? new Date(offerSettings.deadline).toISOString() : "", offer_cta_text: offerSettings.ctaText }) })
+      if (res.ok) {
+        const el = document.createElement("div"); el.textContent = "Settings saved!"; el.className = "fixed bottom-6 right-6 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm font-bold"; document.body.appendChild(el); setTimeout(()=>el.remove(), 2500)
+      }
+    } catch {} finally { setOfferSaving(false) }
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -487,6 +514,38 @@ export default function AdminDashboard() {
             {activeSection === "settings" && (
               <div className="space-y-4">
                 <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{t("settings")}</h3>
+
+                {/* Limited Offer Banner Control */}
+                <div className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl p-6`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className={`font-bold ${isDark ? "text-white" : "text-gray-900"}`}>⏰ Limited Offer Banner</h4>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={offerSettings.enabled} onChange={(e) => setOfferSettings({ ...offerSettings, enabled: e.target.checked })} className="w-4 h-4 accent-blue-600" />
+                      <span className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>{offerSettings.enabled ? "Visible" : "Hidden"}</span>
+                    </label>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div>
+                      <label className={`text-xs font-semibold mb-1 block ${isDark ? "text-gray-400" : "text-gray-500"}`}>Title</label>
+                      <input type="text" value={offerSettings.title} onChange={(e) => setOfferSettings({ ...offerSettings, title: e.target.value })} className={`w-full px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                    </div>
+                    <div>
+                      <label className={`text-xs font-semibold mb-1 block ${isDark ? "text-gray-400" : "text-gray-500"}`}>Subtitle</label>
+                      <input type="text" value={offerSettings.subtitle} onChange={(e) => setOfferSettings({ ...offerSettings, subtitle: e.target.value })} className={`w-full px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                    </div>
+                    <div>
+                      <label className={`text-xs font-semibold mb-1 block ${isDark ? "text-gray-400" : "text-gray-500"}`}>Deadline (countdown end)</label>
+                      <input type="datetime-local" value={offerSettings.deadline} onChange={(e) => setOfferSettings({ ...offerSettings, deadline: e.target.value })} className={`w-full px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                    </div>
+                    <div>
+                      <label className={`text-xs font-semibold mb-1 block ${isDark ? "text-gray-400" : "text-gray-500"}`}>Button Text</label>
+                      <input type="text" value={offerSettings.ctaText} onChange={(e) => setOfferSettings({ ...offerSettings, ctaText: e.target.value })} className={`w-full px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                    </div>
+                  </div>
+                  <button onClick={saveOfferSettings} className="mt-4 bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors">{t("saveSettings")}</button>
+                </div>
+
+                {/* Static site info (display only) */}
                 {[
                   { title: t("siteName"), value: "Tokmat Academy", type: "text" },
                   { title: t("supportEmail"), value: "support@tokmatacademy.com", type: "email" },
@@ -498,7 +557,6 @@ export default function AdminDashboard() {
                     <input type={setting.type} defaultValue={setting.value} className={`px-4 py-2 rounded-lg text-sm border outline-none w-64 text-right ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
                   </div>
                 ))}
-                <button className="bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors">{t("saveSettings")}</button>
               </div>
             )}
 
