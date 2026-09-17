@@ -30,7 +30,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: true, requests: res.rows });
   } else {
     const res = await pool.query(`SELECT * FROM video_requests WHERE user_id=$1 ORDER BY created_at DESC`, [user.id]);
-    return NextResponse.json({ ok: true, requests: res.rows });
+    // full access check — approved hole flag on
+    const hasFullAccess = res.rows.some((r: any) => r.video_id === "full_access" && r.status === "approved");
+    return NextResponse.json({ ok: true, requests: res.rows, fullAccess: hasFullAccess });
   }
 }
 
@@ -46,6 +48,21 @@ export async function POST(req: Request) {
   const approved = await pool.query(`SELECT id FROM video_requests WHERE user_id=$1 AND video_id=$2 AND status='approved'`, [user.id, String(video_id)]);
   if (approved.rows.length) return NextResponse.json({ ok: false, error: "Already approved" }, { status: 409 });
   const res = await pool.query(`INSERT INTO video_requests (user_id, video_id, video_title, status) VALUES ($1,$2,$3,'pending') RETURNING *`, [user.id, String(video_id), String(video_title)]);
+  return NextResponse.json({ ok: true, request: res.rows[0] });
+}
+
+// Full Access ($100 one-time — sob video unlock) request
+export async function PUT(req: Request) {
+  const user = await getUser(req);
+  if (!user) return NextResponse.json({ ok: false, error: "Please login" }, { status: 401 });
+  await ensureTable();
+  // already approved?
+  const approved = await pool.query(`SELECT id FROM video_requests WHERE user_id=$1 AND video_id='full_access' AND status='approved'`, [user.id]);
+  if (approved.rows.length) return NextResponse.json({ ok: false, error: "Full access already active" }, { status: 409 });
+  // pending?
+  const pending = await pool.query(`SELECT id FROM video_requests WHERE user_id=$1 AND video_id='full_access' AND status='pending'`, [user.id]);
+  if (pending.rows.length) return NextResponse.json({ ok: false, error: "Full access request already pending" }, { status: 409 });
+  const res = await pool.query(`INSERT INTO video_requests (user_id, video_id, video_title, status) VALUES ($1,'full_access','Full Access — All Courses ($100)','pending') RETURNING *`, [user.id]);
   return NextResponse.json({ ok: true, request: res.rows[0] });
 }
 

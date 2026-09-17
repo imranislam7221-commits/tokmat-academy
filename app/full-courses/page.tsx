@@ -22,11 +22,46 @@ export default function FullCoursesPage() {
   const isDark = theme === "dark"
   const t = (key: string) => translate(locale, key)
   const [playing, setPlaying] = useState<number | null>(null)
+  // Access state: guest (login nai) / paid (full access approved) / unpaid (login ache, pay nai)
+  const [access, setAccess] = useState<"loading" | "guest" | "paid" | "unpaid">("loading")
+  const [requestState, setRequestState] = useState<"none" | "pending">("none")
+  const [toast, setToast] = useState("")
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search)
     setLocale((p.get("locale") || "en") as Locale)
+    // login + full access check
+    fetch("/api/auth", { cache: "no-store", credentials: "include" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j.ok || !j.user) { setAccess("guest"); return }
+        return fetch("/api/video-requests", { cache: "no-store", credentials: "include" })
+          .then((r) => r.json())
+          .then((v) => {
+            if (v.ok && (v.fullAccess || (v.requests || []).some((r: any) => r.video_id === "full_access" && r.status === "approved"))) {
+              setAccess("paid")
+            } else {
+              setAccess("unpaid")
+              if ((v.requests || []).some((r: any) => r.video_id === "full_access" && r.status === "pending")) setRequestState("pending")
+            }
+          })
+      })
+      .catch(() => setAccess("guest"))
   }, [])
+
+  const requestFullAccess = async () => {
+    try {
+      const res = await fetch("/api/video-requests", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) })
+      const j = await res.json()
+      if (j.ok) {
+        setRequestState("pending")
+        setToast("✅ Request sent! Admin will contact you for payment.")
+      } else {
+        setToast("⚠️ " + (j.error || "Failed"))
+      }
+    } catch { setToast("❌ Something went wrong") }
+    setTimeout(() => setToast(""), 3500)
+  }
 
   return (
     <main className={`min-h-screen transition-colors duration-300 ${isDark ? "bg-dark-950" : "bg-gray-50"}`}>
@@ -62,12 +97,20 @@ export default function FullCoursesPage() {
                 <h2 className={`text-2xl font-extrabold ${isDark ? "text-white" : "text-gray-900"}`}>{v.title}</h2>
                 <p className={`mt-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}>{t(v.descKey)}</p>
                 <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                  <Link href={`/register?locale=${locale}`} className="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors">
-                    🚀 {t("fcRegisterCta")}
-                  </Link>
-                  <Link href={`/videos?locale=${locale}`} className="flex-1 text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-colors">
-                    {t("fcAllVideos")} →
-                  </Link>
+                  {access === "paid" ? (
+                    <a href={`/videos?locale=${locale}`} className="flex-1 text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-colors">
+                      📺 {t("fcAllVideos")} →
+                    </a>
+                  ) : (
+                    <>
+                      <Link href={`/register?locale=${locale}`} className="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors">
+                        🚀 {t("fcRegisterCta")}
+                      </Link>
+                      <Link href={`/videos?locale=${locale}`} className="flex-1 text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-colors">
+                        {t("fcAllVideos")} →
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             )
@@ -101,11 +144,47 @@ export default function FullCoursesPage() {
                 </button>
               ))}
             </div>
+            {/* CTA — access onujayi (guest / unpaid / paid) */}
             <div className={`mt-8 text-center rounded-2xl p-5 border ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"}`}>
-              <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>{t("fcPreviewNote")}</p>
-              <Link href={`/register?locale=${locale}`} className="inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl transition-colors">
-                🚀 {t("fcRegisterCta")}
-              </Link>
+              {access === "loading" && (
+                <div className="flex justify-center py-2"><div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full"></div></div>
+              )}
+
+              {access === "guest" && (
+                <>
+                  <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>{t("fcPreviewNote")}</p>
+                  <Link href={`/register?locale=${locale}`} className="inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl transition-colors">
+                    🚀 {t("fcRegisterCta")}
+                  </Link>
+                </>
+              )}
+
+              {access === "unpaid" && (
+                <>
+                  <p className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>🔓 Unlock ALL Full Courses — $100 one-time payment</p>
+                  <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>Lifetime access • Pay once, watch everything forever</p>
+                  {requestState === "pending" ? (
+                    <div className="mt-4 inline-flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/40 text-yellow-500 font-bold text-sm px-6 py-3 rounded-xl">
+                      ⏳ Request pending — Admin will contact you for payment
+                    </div>
+                  ) : (
+                    <button onClick={requestFullAccess} className="mt-4 block mx-auto bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-lg shadow-green-500/30">
+                      💳 Get Full Access — $100
+                    </button>
+                  )}
+                </>
+              )}
+
+              {access === "paid" && (
+                <>
+                  <p className="text-sm font-semibold text-green-500">✅ Full Access Active — you can watch all courses!</p>
+                  <a href={`/videos?locale=${locale}`} className="inline-block mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold px-8 py-3 rounded-xl transition-colors">
+                    📺 Watch All Full Courses
+                  </a>
+                </>
+              )}
+
+              {toast && <div className="mt-3 text-sm font-medium text-blue-500">{toast}</div>}
             </div>
           </>
         )}

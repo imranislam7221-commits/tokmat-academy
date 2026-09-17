@@ -573,7 +573,13 @@ export default function AdminDashboard() {
                           {videoReqs.map((r:any)=> (
                             <tr key={r.id}>
                               <td className={`px-4 py-3 text-sm ${isDark?"text-gray-300":"text-gray-700"}`}>{r.email}<br/><span className="text-xs text-gray-500">{r.first_name}</span></td>
-                              <td className={`px-4 py-3 text-sm font-medium ${isDark?"text-white":"text-gray-900"}`}>{r.video_title} <span className="text-xs text-gray-500">({r.video_id})</span></td>
+                              <td className={`px-4 py-3 text-sm font-medium ${isDark?"text-white":"text-gray-900"}`}>
+                                {r.video_id === "full_access" ? (
+                                  <><span className="inline-block bg-gradient-to-r from-yellow-400 to-amber-500 text-purple-900 text-xs font-extrabold px-2 py-0.5 rounded mr-1">⭐ FULL ACCESS $100</span> {r.video_title.split("—")[0]}</>
+                                ) : (
+                                  <>{r.video_title} <span className="text-xs text-gray-500">({r.video_id})</span></>
+                                )}
+                              </td>
                               <td className="px-4 py-3"><span className={`text-xs font-bold px-2 py-1 rounded-full ${r.status==='approved'?'bg-green-100 text-green-700': r.status==='rejected'?'bg-red-100 text-red-700':'bg-yellow-100 text-yellow-700'}`}>{r.status}</span></td>
                               <td className={`px-4 py-3 text-xs ${isDark?"text-gray-400":"text-gray-500"}`}>{new Date(r.created_at).toLocaleString()}</td>
                               <td className="px-4 py-3 flex gap-2">

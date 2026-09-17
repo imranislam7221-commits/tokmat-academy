@@ -19,7 +19,8 @@ export default function VideosPage() {
   useEffect(()=>{
     fetch("/api/videos").then(r=>r.json()).then(j=>{ setAllVideos(j.videos||[]); setVideosLoading(false) }).catch(()=> setVideosLoading(false))
   }, [])
-  useEffect(()=>{ fetch("/api/video-requests").then(r=>r.json()).then(j=>{ if(j.ok) setMyRequests(j.requests||[])}).catch(()=>{}) }, [])
+  const [hasFullAccess, setHasFullAccess] = useState(false)
+  useEffect(()=>{ fetch("/api/video-requests").then(r=>r.json()).then(j=>{ if(j.ok){ setMyRequests(j.requests||[]); setHasFullAccess(!!j.fullAccess || (j.requests||[]).some((r:any)=> r.video_id==="full_access" && r.status==="approved"))}}).catch(()=>{}) }, [])
   const getStatus = (vid:string) => myRequests.find((r:any)=> String(r.video_id)===String(vid))?.status
   const handleRequest = async (v:any) => {
     try {
@@ -89,6 +90,8 @@ export default function VideosPage() {
                 <p className={`text-xs mb-3 line-clamp-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{v.description || v.desc || t(`vid${v.id}Desc`)}</p>
                 {(() => {
                   const st = getStatus(String(v.id));
+                  // Full Access active hole sob video Watch Now
+                  if (hasFullAccess) return <button onClick={()=> window.location.href=`/videos/${v.id}` } className="block w-full font-bold text-sm py-2.5 rounded-xl text-center bg-green-600 hover:bg-green-700 text-white">▶ {t("watchNow")}</button>;
                   if (st==="approved") return <button onClick={()=> window.location.href=`/videos/${v.id}` } className="block w-full font-bold text-sm py-2.5 rounded-xl text-center bg-green-600 hover:bg-green-700 text-white">▶ {t("watchNow")}</button>;
                   if (st==="pending") return <button disabled className="block w-full font-bold text-sm py-2.5 rounded-xl text-center bg-yellow-500 text-white opacity-80 cursor-not-allowed">⏳ {t("pendingApproval")}</button>;
                   return <button onClick={()=> handleRequest(v)} className={`block w-full font-bold text-sm py-2.5 rounded-xl text-center transition-colors ${isDark ? "bg-purple-600 hover:bg-purple-500 text-white" : "bg-purple-600 hover:bg-purple-700 text-white"}`}>{t("unlockVideo")} {v.price} - Request</button>;

@@ -36,13 +36,17 @@ export default function VideoDetailPage() {
   const ytMatch = lessonSrc?.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,20})/)
   const isEmbed = !!ytMatch || /iframe|embed/i.test(lessonSrc || "")
 
-  // Guard: video approved na hole access nai
+  // Guard: full access approved OR ei video ta approved — na hole locked
   useEffect(() => {
     fetch("/api/video-requests", { cache: "no-store", credentials: "include" })
       .then((r) => r.json())
       .then((j) => {
         if (!j.ok) { setAuthState("denied"); return; }
-        const req = (j.requests || []).find((r: any) => String(r.video_id) === videoId);
+        const reqs = j.requests || [];
+        // Full Access ($100) approved hole SOB video khule jabe
+        const hasFullAccess = reqs.some((r: any) => r.video_id === "full_access" && r.status === "approved") || !!j.fullAccess;
+        if (hasFullAccess) { setAuthState("ok"); return; }
+        const req = reqs.find((r: any) => String(r.video_id) === videoId);
         setAuthState(req?.status === "approved" ? "ok" : "denied");
       })
       .catch(() => setAuthState("denied"))
