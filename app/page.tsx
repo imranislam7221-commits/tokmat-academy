@@ -30,22 +30,10 @@ function AnimatedCounter({ end, duration = 2000, suffix = "" }: { end: number; d
   return <div>{count.toLocaleString()}{suffix}</div>
 }
 
-// Hero demo modal er jonno mock videos
-const demoCourses = [
-  { id: 1, title: "Forex Basics", desc: "Pips, lots, leverage — sob basics", dur: "12:30", lessons: 5, img: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=640&h=360&fit=crop" },
-  { id: 2, title: "Technical Analysis", desc: "Chart pattern & indicator mastery", dur: "18:45", lessons: 8, img: "https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=640&h=360&fit=crop" },
-  { id: 3, title: "Risk Management", desc: "Capital protect korar proven system", dur: "09:20", lessons: 4, img: "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?w=640&h=360&fit=crop" },
-  { id: 4, title: "Advanced Strategies", desc: "Funded traders der professional setup", dur: "22:10", lessons: 10, img: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=640&h=360&fit=crop" },
-  { id: 5, title: "Price Action", desc: "Institutional traders er chart reading", dur: "15:40", lessons: 6, img: "https://images.unsplash.com/photo-1516245834210-c4c142787335?w=640&h=360&fit=crop" },
-  { id: 6, title: "Trading Psychology", desc: "Winning mindset banano", dur: "10:15", lessons: 4, img: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=640&h=360&fit=crop" },
-]
-
 export default function Home() {
   const [locale, setLocale] = useState<Locale>("en")
   const [mounted, setMounted] = useState(false)
   const [visibleReviews, setVisibleReviews] = useState(6)
-  const [demoOpen, setDemoOpen] = useState(false)
-  const [playingDemo, setPlayingDemo] = useState<number | null>(null)
   
   const { theme } = useTheme()
   const isDark = theme === "dark"
@@ -151,12 +139,12 @@ export default function Home() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                <button onClick={() => setDemoOpen(true)} className="btn-accent !rounded-xl text-center relative">
+                <Link href="/full-courses" className="btn-accent !rounded-xl text-center">
                   <span className="inline-flex items-center gap-2">
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                     Click Here to Full Courses
                   </span>
-                </button>
+                </Link>
                 <Link href="/register" className="btn-outline !rounded-xl text-center">
                   {t("getStarted")}
                 </Link>
@@ -216,110 +204,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== Full Courses Demo Modal ===== */}
-      {demoOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={() => { setDemoOpen(false); setPlayingDemo(null); }}>
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
-          <div
-            className="relative w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-2xl border border-white/10 bg-dark-900 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-dark-900/95 backdrop-blur border-b border-white/10">
-              <div>
-                <h3 className="text-xl font-extrabold text-white">🎓 Tokmat Academy — Full Courses</h3>
-                <p className="text-gray-400 text-xs mt-0.5">Register korle full course unlock hobe</p>
-              </div>
-              <button
-                onClick={() => { setDemoOpen(false); setPlayingDemo(null); }}
-                className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
-                aria-label="Close"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Playing Video / Grid */}
-            <div className="p-6">
-              {playingDemo !== null ? (
-                (() => {
-                  const v = demoCourses.find((c) => c.id === playingDemo)!;
-                  return (
-                    <div>
-                      <button
-                        onClick={() => setPlayingDemo(null)}
-                        className="text-blue-400 hover:text-blue-300 text-sm font-semibold mb-3"
-                      >
-                        ← Sob course fire jao
-                      </button>
-                      {/* Mock video player */}
-                      <div className="relative aspect-video rounded-xl overflow-hidden bg-black mb-4">
-                        <Image src={v.img} alt={v.title} fill className="object-cover opacity-40" />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-                          <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center mb-3 animate-pulse">
-                            <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                          </div>
-                          <p className="font-bold text-lg">{v.title} — Playing...</p>
-                          <p className="text-xs text-white/60 mt-1">Demo {v.dur} • {v.lessons} lessons</p>
-                        </div>
-                        {/* Fake progress bar */}
-                        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/10">
-                          <div className="h-full w-1/3 bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse"></div>
-                        </div>
-                      </div>
-                      <h4 className="text-white font-bold text-lg">{v.title}</h4>
-                      <p className="text-gray-400 text-sm mt-1">{v.desc}</p>
-                      <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                        <Link href="/register" className="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors">
-                          🚀 Register koro — Full course unlock koro
-                        </Link>
-                        <Link href="/videos" className="flex-1 text-center bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-colors">
-                          Sob videos dekho →
-                        </Link>
-                      </div>
-                    </div>
-                  );
-                })()
-              ) : (
-                <>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {demoCourses.map((v) => (
-                      <button
-                        key={v.id}
-                        onClick={() => setPlayingDemo(v.id)}
-                        className="group text-left rounded-xl overflow-hidden border border-white/10 hover:border-blue-500/50 transition-all duration-300 hover:scale-[1.03]"
-                      >
-                        <div className="relative aspect-video overflow-hidden">
-                          <Image src={v.img} alt={v.title} width={640} height={360} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-11 h-11 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                              <svg className="w-5 h-5 text-gray-900 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                            </div>
-                          </div>
-                          <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded">{v.dur}</span>
-                          <span className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">PREVIEW</span>
-                        </div>
-                        <div className="bg-dark-800 px-3 py-2.5">
-                          <div className="text-white font-semibold text-sm truncate">{v.title}</div>
-                          <div className="text-gray-400 text-xs mt-0.5 truncate">{v.desc}</div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-6 text-center bg-white/5 border border-white/10 rounded-xl p-4">
-                    <p className="text-gray-300 text-sm">
-                      🎁 Ei gulo sudhu <span className="text-white font-bold">preview</span> — register korle <span className="text-blue-400 font-bold">12 ta full course</span> unlock hobe
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ===== Stats Section (Animated Counters) ===== */}
       <section className="relative -mt-16 z-20 px-4">
@@ -634,7 +518,7 @@ export default function Home() {
               <a
                 key={i}
                 href={feature.href}
-                onClick={(e) => { if (feature.demo) { e.preventDefault(); setDemoOpen(true); } }}
+                onClick={(e) => { if (feature.demo) { e.preventDefault(); window.location.href = "/full-courses"; } }}
                 className={`group rounded-2xl p-8 backdrop-blur-xl border transition-all hover:shadow-xl hover:scale-105 cursor-pointer ${isDark ? "bg-white/5 border-white/10 hover:bg-white/10" : "bg-white/60 border-white/30 hover:bg-white/80"}`}
               >
                 <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 text-2xl`}>
