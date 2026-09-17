@@ -112,14 +112,14 @@ async function fetchFinnhubQuote(symbol: string) {
   }
 }
 
-async function getPersistedSignals(): Promise<any[] | null> {
+// Admin-posted signals ekhon PostgreSQL e thake (data/signals.json bad deya hoyeche).
+// DB theke porte fail korle live price theke fresh generate hoy.
+async function getDbSignals(): Promise<any[] | null> {
   try {
-    const fs = await import("fs/promises");
-    const path = await import("path");
-    const file = path.join(process.cwd(), "data", "signals.json");
-    const raw = await fs.readFile(file, "utf-8");
-    const arr = JSON.parse(raw);
-    if (Array.isArray(arr) && arr.length > 0) return arr.slice(0, 6);
+    const { pool, initDb } = await import("@/lib/db");
+    await initDb();
+    const res = await pool.query(`SELECT pair, direction, entry, tp, sl, profit, status, time FROM signals ORDER BY id DESC LIMIT 6`);
+    if (res.rows.length > 0) return res.rows;
   } catch {}
   return null;
 }
@@ -251,8 +251,8 @@ export async function GET() {
       }
     }
 
-    // Admin-posted signals prefer hoy (data/signals.json); na thakle live price theke fresh generate
-    const persisted = await getPersistedSignals();
+    // Admin-posted signals DB theke prefer hoy; na thakle live price theke fresh generate
+    const persisted = await getDbSignals();
     let signals: any[];
     if (persisted) {
       signals = persisted;

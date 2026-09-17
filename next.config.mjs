@@ -7,6 +7,13 @@ const nextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
+  async rewrites() {
+    return [
+      // Browser requests /favicon.ico by default — we only ship favicon.png,
+      // so rewrite to stop the 404 console error.
+      { source: "/favicon.ico", destination: "/favicon.png" },
+    ];
+  },
   async headers() {
     return [
       {

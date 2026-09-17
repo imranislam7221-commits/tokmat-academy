@@ -83,12 +83,12 @@ export default function VideosPage() {
                 <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded">{v.dur}</span>
               </div>
               <div className="p-4">
-                <div className={`font-semibold text-sm mb-1 truncate ${isDark ? "text-white" : "text-gray-900"}`}>{v.title}</div>
-                <p className={`text-xs mb-3 line-clamp-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{v.desc}</p>
+                <div className={`font-semibold text-sm mb-1 truncate ${isDark ? "text-white" : "text-gray-900"}`}>{t(`vid${v.id}Title`)}</div>
+                <p className={`text-xs mb-3 line-clamp-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t(`vid${v.id}Desc`)}</p>
                 {(() => {
                   const st = getStatus(String(v.id));
-                  if (st==="approved") return <button onClick={()=> window.location.href=`/videos/${v.id}` } className="block w-full font-bold text-sm py-2.5 rounded-xl text-center bg-green-600 hover:bg-green-700 text-white">▶ Watch Now</button>;
-                  if (st==="pending") return <button disabled className="block w-full font-bold text-sm py-2.5 rounded-xl text-center bg-yellow-500 text-white opacity-80 cursor-not-allowed">⏳ Pending Approval</button>;
+                  if (st==="approved") return <button onClick={()=> window.location.href=`/videos/${v.id}` } className="block w-full font-bold text-sm py-2.5 rounded-xl text-center bg-green-600 hover:bg-green-700 text-white">▶ {t("watchNow")}</button>;
+                  if (st==="pending") return <button disabled className="block w-full font-bold text-sm py-2.5 rounded-xl text-center bg-yellow-500 text-white opacity-80 cursor-not-allowed">⏳ {t("pendingApproval")}</button>;
                   return <button onClick={()=> handleRequest(v)} className={`block w-full font-bold text-sm py-2.5 rounded-xl text-center transition-colors ${isDark ? "bg-purple-600 hover:bg-purple-500 text-white" : "bg-purple-600 hover:bg-purple-700 text-white"}`}>{t("unlockVideo")} {v.price} - Request</button>;
                 })()}
               </div>
@@ -109,23 +109,23 @@ export default function VideosPage() {
               </div>
               <div className="grid md:grid-cols-3 gap-6">
                 <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8">
-                  <h3 className="font-bold text-white mb-1">1 Month</h3>
+                  <h3 className="font-bold text-white mb-1">{t("oneMonth")}</h3>
                   <div className="text-4xl font-extrabold text-white mb-1">$29</div>
-                  <div className="text-purple-100 text-sm mb-6">/month</div>
+                  <div className="text-purple-100 text-sm mb-6">{t("perMonth")}</div>
                   <a href="/register" className="block w-full bg-white text-purple-700 font-bold py-3 rounded-xl hover:bg-gray-100 transition-colors text-center">{t("unlockVideo")}</a>
                 </div>
                 <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8">
-                  <h3 className="font-bold text-white mb-1">6 Months</h3>
+                  <h3 className="font-bold text-white mb-1">{t("sixMonths")}</h3>
                   <div className="text-4xl font-extrabold text-white mb-1">$99</div>
-                  <div className="text-purple-100 text-sm mb-6">$16/month</div>
+                  <div className="text-purple-100 text-sm mb-6">$16{t("perMonth")}</div>
                   <a href="/register" className="block w-full bg-white text-purple-700 font-bold py-3 rounded-xl hover:bg-gray-100 transition-colors text-center">{t("unlockVideo")}</a>
                 </div>
                 <div className="bg-white border-2 border-yellow-400 rounded-2xl p-8 relative">
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-purple-900 text-xs font-bold px-3 py-1 rounded-full">BEST VALUE</span>
-                  <h3 className="font-bold text-gray-900 mb-1">Yearly</h3>
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-purple-900 text-xs font-bold px-3 py-1 rounded-full">{t("bestValue")}</span>
+                  <h3 className="font-bold text-gray-900 mb-1">{t("yearly")}</h3>
                   <div className="text-4xl font-extrabold text-gray-900 mb-1">$199</div>
-                  <div className="text-gray-500 text-sm mb-6">$16/month</div>
-                  <a href="/register" className="block w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-900 font-bold py-3 rounded-xl hover:from-yellow-500 hover:to-yellow-600 transition-colors text-center">Get Yearly</a>
+                  <div className="text-gray-500 text-sm mb-6">$16{t("perMonth")}</div>
+                  <a href="/register" className="block w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-purple-900 font-bold py-3 rounded-xl hover:from-yellow-500 hover:to-yellow-600 transition-colors text-center">{t("getYearly")}</a>
                 </div>
               </div>
             </div>
