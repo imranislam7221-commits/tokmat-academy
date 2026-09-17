@@ -18,13 +18,19 @@ export default function AdminDashboard() {
   const { theme } = useTheme()
   const isDark = theme === "dark"
   const [locale, setLocale] = useState<Locale>("en")
-  const [activeSection, setActiveSection] = useState<"overview" | "users" | "signals" | "content" | "settings">("overview")
+  const [activeSection, setActiveSection] = useState<"overview" | "users" | "signals" | "videos" | "content" | "settings">("overview")
   const [showNewSignal, setShowNewSignal] = useState(false)
   const [newSignal, setNewSignal] = useState({ pair: "", direction: "BUY", entry: "", tp: "", sl: "" })
   const [mounted, setMounted] = useState(false)
   const [liveSignals, setLiveSignals] = useState<any[]>(demoSignals)
   const [videoReqs, setVideoReqs] = useState<any[]>([])
   const [videoReqsLoading, setVideoReqsLoading] = useState(false)
+  // Video management state
+  const [dbVideos, setDbVideos] = useState<any[]>([])
+  const [videosLoading, setVideosLoading] = useState(false)
+  const [showVideoForm, setShowVideoForm] = useState(false)
+  const [editingVideo, setEditingVideo] = useState<any>(null)
+  const [videoForm, setVideoForm] = useState({ title: "", desc: "", lessons: "5", dur: "", price: "$5", img: "", video_url: "" })
 
   useEffect(() => {
     setMounted(true)
@@ -74,6 +80,48 @@ export default function AdminDashboard() {
     fetch("/api/video-requests").then(r=>r.json()).then(j=>{ if(j.ok) setVideoReqs(j.requests||[]); setVideoReqsLoading(false)}).catch(()=> setVideoReqsLoading(false))
   }, [activeSection])
 
+  // Video management loader
+  const loadVideos = () => {
+    setVideosLoading(true)
+    fetch("/api/videos").then(r=>r.json()).then(j=>{ setDbVideos(j.videos||[]); setVideosLoading(false) }).catch(()=> setVideosLoading(false))
+  }
+  useEffect(() => {
+    if (activeSection !== "videos") return
+    loadVideos()
+  }, [activeSection])
+
+  const openVideoForm = (v?: any) => {
+    if (v) {
+      setEditingVideo(v)
+      setVideoForm({ title: v.title||"", desc: v.desc||"", lessons: String(v.lessons||1), dur: v.dur||"", price: v.price||"$5", img: v.img||"", video_url: v.video_url||"" })
+    } else {
+      setEditingVideo(null)
+      setVideoForm({ title: "", desc: "", lessons: "5", dur: "", price: "$5", img: "", video_url: "" })
+    }
+    setShowVideoForm(true)
+  }
+
+  const saveVideo = async () => {
+    if (!videoForm.title.trim()) return
+    try {
+      const method = editingVideo ? "PATCH" : "POST"
+      const body = editingVideo ? { id: editingVideo.id, ...videoForm } : videoForm
+      const res = await fetch("/api/videos", { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      if (res.ok) {
+        setShowVideoForm(false)
+        loadVideos()
+        const el = document.createElement("div"); el.textContent = editingVideo ? "Video updated!" : "Video added!"; el.className = "fixed bottom-6 right-6 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm font-bold"; document.body.appendChild(el); setTimeout(()=>el.remove(), 2500)
+      }
+    } catch {}
+  }
+
+  const deleteVideo = async (id: number) => {
+    try {
+      const res = await fetch(`/api/videos?id=${id}`, { method: "DELETE" })
+      if (res.ok) setDbVideos((prev) => prev.filter((v) => v.id !== id))
+    } catch {}
+  }
+
   const handleVideoAction = async (id:number, status:string) => {
     try { const r=await fetch("/api/video-requests",{method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({id, status})}); if(r.ok) setVideoReqs((prev:any)=> prev.map((x:any)=> x.id===id ? {...x, status}:x)); } catch {}
   }
@@ -91,6 +139,7 @@ export default function AdminDashboard() {
     { id: "overview" as const, label: t("overview"), icon: "📊" },
     { id: "users" as const, label: t("users"), icon: "👥" },
     { id: "signals" as const, label: t("signals"), icon: "📡" },
+    { id: "videos" as const, label: "Videos", icon: "🎬" },
     { id: "content" as const, label: t("content"), icon: "📝" },
     { id: "settings" as const, label: t("settings"), icon: "⚙️" },
   ]
@@ -323,6 +372,84 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* VIDEOS - Video Management */}
+            {activeSection === "videos" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>🎬 Video Management</h3>
+                  <button onClick={() => openVideoForm()} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors flex items-center gap-2">
+                    <span>+</span> Add Video
+                  </button>
+                </div>
+
+                {/* Add/Edit Form */}
+                {showVideoForm && (
+                  <div className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl p-6 animate-fade-in`}>
+                    <h4 className={`font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>{editingVideo ? `Edit: ${editingVideo.title}` : "Add New Video"}</h4>
+                    <div className="grid md:grid-cols-2 gap-3">
+                      <input type="text" placeholder="Video title *" value={videoForm.title} onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                      <input type="text" placeholder="Price (e.g. $5)" value={videoForm.price} onChange={(e) => setVideoForm({ ...videoForm, price: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                      <input type="text" placeholder="Description" value={videoForm.desc} onChange={(e) => setVideoForm({ ...videoForm, desc: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none md:col-span-2 ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                      <input type="number" min="1" placeholder="Lessons count" value={videoForm.lessons} onChange={(e) => setVideoForm({ ...videoForm, lessons: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                      <input type="text" placeholder="Duration (e.g. 12:30)" value={videoForm.dur} onChange={(e) => setVideoForm({ ...videoForm, dur: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                      <input type="text" placeholder="Thumbnail image URL" value={videoForm.img} onChange={(e) => setVideoForm({ ...videoForm, img: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none md:col-span-2 ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                      <input type="text" placeholder="Video URL (mp4 / embed link) *" value={videoForm.video_url} onChange={(e) => setVideoForm({ ...videoForm, video_url: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none md:col-span-2 ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                    </div>
+                    <div className="flex gap-3 mt-4">
+                      <button onClick={saveVideo} className="bg-green-600 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-green-700 transition-colors">{editingVideo ? "Update Video" : "Add Video"}</button>
+                      <button onClick={() => setShowVideoForm(false)} className={`px-6 py-2 rounded-xl text-sm font-medium ${isDark ? "bg-dark-700 text-gray-300 hover:bg-dark-600" : "bg-gray-100 text-gray-600 hover:bg-gray-200"} transition-colors`}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Video List */}
+                {videosLoading ? (
+                  <div className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Loading videos...</div>
+                ) : dbVideos.length === 0 ? (
+                  <div className={`text-sm border rounded-xl p-6 text-center ${isDark ? "bg-dark-800 border-dark-700 text-gray-400" : "bg-white border-gray-100 text-gray-500"}`}>No videos yet. Click "Add Video" to create the first one.</div>
+                ) : (
+                  <div className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl overflow-hidden`}>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className={isDark ? "bg-dark-700" : "bg-gray-50"}>
+                            {["Video", "Price", "Lessons", "Duration", "Video URL", "Actions"].map((h) => (
+                              <th key={h} className={`text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider ${isDark ? "text-gray-400" : "text-gray-500"}`}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className={`divide-y ${isDark ? "divide-dark-700" : "divide-gray-100"}`}>
+                          {dbVideos.map((v: any) => (
+                            <tr key={v.id} className={`transition-colors ${isDark ? "hover:bg-dark-700/50" : "hover:bg-gray-50"}`}>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-3">
+                                  {v.img ? <img src={v.img} alt="" className="w-14 h-9 object-cover rounded-lg" /> : <div className="w-14 h-9 rounded-lg bg-gray-200 dark:bg-dark-700 flex items-center justify-center text-xs">🎬</div>}
+                                  <div>
+                                    <div className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{v.title}</div>
+                                    <div className={`text-xs max-w-[220px] truncate ${isDark ? "text-gray-500" : "text-gray-400"}`}>{v.desc}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className={`px-4 py-3 text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{v.price}</td>
+                              <td className={`px-4 py-3 text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>{v.lessons}</td>
+                              <td className={`px-4 py-3 text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>{v.dur}</td>
+                              <td className={`px-4 py-3 text-xs max-w-[180px] truncate ${v.video_url ? (isDark ? "text-gray-400" : "text-gray-500") : "text-red-500 font-bold"}`}>{v.video_url || "⚠ No URL set"}</td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <button onClick={() => openVideoForm(v)} className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-blue-700">Edit</button>
+                                  <button onClick={() => deleteVideo(v.id)} className="bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-red-700">Delete</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

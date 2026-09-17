@@ -1,24 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Image from "next/image"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
 
-const allVideos = [
-  { id: 1, title: "Forex Basics", desc: "Learn the fundamentals of forex trading.", lessons: 5, dur: "12:30", price: "$5", img: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=220&fit=crop" },
-  { id: 2, title: "Technical Analysis", desc: "Master chart patterns and indicators.", lessons: 8, dur: "18:45", price: "$8", img: "https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=400&h=220&fit=crop" },
-  { id: 3, title: "Risk Management", desc: "Protect your capital with proven strategies.", lessons: 4, dur: "09:20", price: "$5", img: "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?w=400&h=220&fit=crop" },
-  { id: 4, title: "Advanced Strategies", desc: "Professional strategies used by funded traders.", lessons: 10, dur: "22:10", price: "$12", img: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400&h=220&fit=crop" },
-  { id: 5, title: "Price Action", desc: "Read charts like institutional traders.", lessons: 6, dur: "15:40", price: "$8", img: "https://images.unsplash.com/photo-1516245834210-c4c142787335?w=400&h=220&fit=crop" },
-  { id: 6, title: "Trading Psychology", desc: "Master emotions and build a winning mindset.", lessons: 4, dur: "10:15", price: "$5", img: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=220&fit=crop" },
-  { id: 7, title: "Chart Patterns", desc: "Recognize powerful chart formations early.", lessons: 7, dur: "20:05", price: "$10", img: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=220&fit=crop" },
-  { id: 8, title: "Market News Analysis", desc: "Understand how news moves the markets.", lessons: 5, dur: "14:25", price: "$6", img: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400&h=220&fit=crop" },
-  { id: 9, title: "Support & Resistance", desc: "Identify key levels for entries and exits.", lessons: 6, dur: "17:30", price: "$8", img: "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?w=400&h=220&fit=crop" },
-  { id: 10, title: "Candlestick Mastery", desc: "Read price action with candlestick patterns.", lessons: 8, dur: "25:15", price: "$10", img: "https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=400&h=220&fit=crop" },
-  { id: 11, title: "Fibonacci Trading", desc: "Use Fibonacci retracements like a pro.", lessons: 5, dur: "13:45", price: "$7", img: "https://images.unsplash.com/photo-1516245834210-c4c142787335?w=400&h=220&fit=crop" },
-  { id: 12, title: "Forex Fundamentals", desc: "Master the economic calendar and news trading.", lessons: 7, dur: "19:50", price: "$9", img: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=220&fit=crop" },
-]
+const allVideosFallback: any[] = [] // videos ekhon /api/videos (DB) theke ase
 
 export default function VideosPage() {
   const [locale, setLocale] = useState<Locale>("en")
@@ -27,6 +13,12 @@ export default function VideosPage() {
   const isDark = theme === "dark"
   const t = (key: string) => translate(locale, key)
   const [myRequests, setMyRequests] = useState<any[]>([])
+  // Videos DB theke load hoy — admin panel theke add/edit/delete kora jay
+  const [allVideos, setAllVideos] = useState<any[]>([])
+  const [videosLoading, setVideosLoading] = useState(true)
+  useEffect(()=>{
+    fetch("/api/videos").then(r=>r.json()).then(j=>{ setAllVideos(j.videos||[]); setVideosLoading(false) }).catch(()=> setVideosLoading(false))
+  }, [])
   useEffect(()=>{ fetch("/api/video-requests").then(r=>r.json()).then(j=>{ if(j.ok) setMyRequests(j.requests||[])}).catch(()=>{}) }, [])
   const getStatus = (vid:string) => myRequests.find((r:any)=> String(r.video_id)===String(vid))?.status
   const handleRequest = async (v:any) => {
@@ -68,11 +60,20 @@ export default function VideosPage() {
 
       {/* Video Grid */}
       <section className="max-w-7xl mx-auto px-4 py-12">
+        {videosLoading && (
+          <div className="flex justify-center py-20">
+            <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full"></div>
+          </div>
+        )}
+        {!videosLoading && allVideos.length === 0 && (
+          <div className={`text-center py-20 ${isDark ? "text-gray-400" : "text-gray-500"}`}>No videos available yet.</div>
+        )}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {allVideos.map((v) => (
+          {allVideos.map((v: any) => (
             <div key={v.id} className={`group rounded-2xl overflow-hidden border backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl ${isDark ? "bg-dark-800 border-dark-700 hover:border-purple-500/50 hover:shadow-purple-500/20" : "bg-white border-gray-100 hover:border-purple-300 hover:shadow-purple-500/10"}`}>
               <div className="relative aspect-video overflow-hidden">
-                <Image src={v.img} alt={v.title} width={400} height={220} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={v.img} alt={v.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">

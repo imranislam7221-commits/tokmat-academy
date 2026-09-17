@@ -6,35 +6,31 @@ import Link from "next/link"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
 
-// Videos list page er sathe same data
-const allVideos = [
-  { id: 1, title: "Forex Basics", desc: "Learn the fundamentals of forex trading.", lessons: 5, dur: "12:30", price: "$5", img: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=220&fit=crop" },
-  { id: 2, title: "Technical Analysis", desc: "Master chart patterns and indicators.", lessons: 8, dur: "18:45", price: "$8", img: "https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=400&h=220&fit=crop" },
-  { id: 3, title: "Risk Management", desc: "Protect your capital with proven strategies.", lessons: 4, dur: "09:20", price: "$5", img: "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?w=400&h=220&fit=crop" },
-  { id: 4, title: "Advanced Strategies", desc: "Professional strategies used by funded traders.", lessons: 10, dur: "22:10", price: "$12", img: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400&h=220&fit=crop" },
-  { id: 5, title: "Price Action", desc: "Read charts like institutional traders.", lessons: 6, dur: "15:40", price: "$8", img: "https://images.unsplash.com/photo-1516245834210-c4c142787335?w=400&h=220&fit=crop" },
-  { id: 6, title: "Trading Psychology", desc: "Master emotions and build a winning mindset.", lessons: 4, dur: "10:15", price: "$5", img: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=220&fit=crop" },
-  { id: 7, title: "Chart Patterns", desc: "Recognize powerful chart formations early.", lessons: 7, dur: "20:05", price: "$10", img: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=220&fit=crop" },
-  { id: 8, title: "Market News Analysis", desc: "Understand how news moves the markets.", lessons: 5, dur: "14:25", price: "$6", img: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400&h=220&fit=crop" },
-  { id: 9, title: "Support & Resistance", desc: "Identify key levels for entries and exits.", lessons: 6, dur: "17:30", price: "$8", img: "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?w=400&h=220&fit=crop" },
-  { id: 10, title: "Candlestick Mastery", desc: "Read price action with candlestick patterns.", lessons: 8, dur: "25:15", price: "$10", img: "https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=400&h=220&fit=crop" },
-  { id: 11, title: "Fibonacci Trading", desc: "Use Fibonacci retracements like a pro.", lessons: 5, dur: "13:45", price: "$7", img: "https://images.unsplash.com/photo-1516245834210-c4c142787335?w=400&h=220&fit=crop" },
-  { id: 12, title: "Forex Fundamentals", desc: "Master the economic calendar and news trading.", lessons: 7, dur: "19:50", price: "$9", img: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=220&fit=crop" },
-]
+// Video DB theke load hoy (/api/videos) — admin panel theke manage kora jay
 
 export default function VideoDetailPage() {
   const params = useParams()
   const videoId = String(params?.id || "")
-  const video = allVideos.find((v) => String(v.id) === videoId)
+  const [video, setVideo] = useState<any>(null)
+  const [videoLoaded, setVideoLoaded] = useState(false)
 
   const [locale, setLocale] = useState<Locale>("en")
   useEffect(() => { const p = new URLSearchParams(window.location.search); setLocale((p.get("locale") || "en") as Locale); }, [])
+
+  useEffect(() => {
+    fetch("/api/videos").then(r=>r.json()).then(j=>{
+      const found = (j.videos||[]).find((v:any)=> String(v.id)===videoId)
+      setVideo(found || null)
+      setVideoLoaded(true)
+    }).catch(()=>{ setVideoLoaded(true) })
+  }, [videoId])
   const { theme } = useTheme()
   const isDark = theme === "dark"
   const t = (key: string) => translate(locale, key)
 
   const [authState, setAuthState] = useState<"loading" | "ok" | "denied">("loading")
   const [activeLesson, setActiveLesson] = useState(1)
+  const lessonSrc = video?.video_url || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
 
   // Guard: video approved na hole access nai
   useEffect(() => {
@@ -47,6 +43,14 @@ export default function VideoDetailPage() {
       })
       .catch(() => setAuthState("denied"))
   }, [videoId])
+
+  if (!videoLoaded) {
+    return (
+      <main className={`min-h-screen flex items-center justify-center ${isDark ? "bg-dark-950" : "bg-gray-50"}`}>
+        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full"></div>
+      </main>
+    )
+  }
 
   if (!video) {
     return (
@@ -91,15 +95,15 @@ export default function VideoDetailPage() {
           ← {t("backToVideos") || "Back to Videos"}
         </Link>
 
-        {/* Player — sample/mock video (pore nijer video URL boshano jabe) */}
+        {/* Player — admin-set video URL (admin panel e change kora jay) */}
         <div className="relative aspect-video rounded-2xl overflow-hidden bg-black mb-6 shadow-2xl">
           <video
-            key={activeLesson}
+            key={`${activeLesson}-${lessonSrc}`}
             className="w-full h-full"
             controls
             autoPlay
             poster={video.img}
-            src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+            src={lessonSrc}
           />
         </div>
 
