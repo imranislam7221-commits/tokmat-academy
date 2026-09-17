@@ -3,6 +3,9 @@ import crypto from "crypto";
 import { pool, initDb, toSafeUser, type DbUser } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const ADMIN_EMAILS = ["maasum1231@gmail.com"];
 
 // Session cookie options
