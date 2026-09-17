@@ -17,24 +17,8 @@ const defaultUserData = {
   activeSignals: 0,
 }
 
-const demoSignals = [
-  { pair: "EUR/USD", direction: "BUY", entry: "1.0850", tp: "1.0920", sl: "1.0810", profit: "+0.64%", status: "TP Hit", color: "green" },
-  { pair: "GBP/JPY", direction: "SELL", entry: "188.500", tp: "187.800", sl: "189.100", profit: "+0.37%", status: "Running", color: "blue" },
-  { pair: "XAU/USD", direction: "BUY", entry: "2345.00", tp: "2375.00", sl: "2330.00", profit: "+1.28%", status: "TP Hit", color: "green" },
-  { pair: "USD/CAD", direction: "SELL", entry: "1.3650", tp: "1.3580", sl: "1.3700", profit: "-0.22%", status: "Running", color: "red" },
-  { pair: "AUD/USD", direction: "BUY", entry: "0.6580", tp: "0.6640", sl: "0.6540", profit: "+0.91%", status: "TP Hit", color: "green" },
-]
-
-const demoHistory = [
-  { date: "Aug 28", pair: "EUR/USD", direction: "BUY", result: "WIN", profit: "+$120", pips: "+70" },
-  { date: "Aug 27", pair: "GBP/JPY", direction: "SELL", result: "WIN", profit: "+$85", pips: "+55" },
-  { date: "Aug 26", pair: "XAU/USD", direction: "BUY", result: "WIN", profit: "+$310", pips: "+300" },
-  { date: "Aug 25", pair: "USD/CAD", direction: "SELL", result: "LOSS", profit: "-$45", pips: "-30" },
-  { date: "Aug 24", pair: "AUD/JPY", direction: "BUY", result: "WIN", profit: "+$95", pips: "+65" },
-  { date: "Aug 23", pair: "NZD/USD", direction: "SELL", result: "WIN", profit: "+$60", pips: "+40" },
-  { date: "Aug 22", pair: "EUR/GBP", direction: "BUY", result: "WIN", profit: "+$75", pips: "+50" },
-  { date: "Aug 21", pair: "USD/JPY", direction: "SELL", result: "WIN", profit: "+$110", pips: "+80" },
-]
+const demoSignals: any[] = []
+const demoHistory: any[] = []
 
 export default function DashboardPage() {
   const { theme } = useTheme()
