@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { pool, initDb } from "@/lib/db";
 import { getUserFromRequest } from "../auth/route";
 
+// Personalized response (video_url access user onujayi alada) — kokhono cache hobe na
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // Video management — admin panel theke full control.
 // GET (public): video list — videos page + detail page ei API theke load hoy
 // POST/PATCH/DELETE: sudhu admin
@@ -40,7 +44,7 @@ const DEFAULT_VIDEOS = [
   { title: "Forex Fundamentals", desc: "Master the economic calendar and news trading.", lessons: 7, dur: "19:50", price: "$9", img: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=220&fit=crop", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
 ];
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await ensureTable();
     const count = await pool.query(`SELECT COUNT(*)::int AS c FROM videos`);
@@ -55,7 +59,30 @@ export async function GET() {
       }
     }
     const res = await pool.query(`SELECT id, title, description, lessons, dur, price, img, video_url, sort_order FROM videos ORDER BY sort_order ASC, id ASC`);
-    return NextResponse.json({ ok: true, videos: res.rows });
+
+    // SECURITY: video_url sudhu authorized viewer ke dekhay —
+    // admin (sob), full_access approved user (sob), ba je video tar request approved (oi video ta).
+    // Guest/unauthorized user video list dekhbe kintu URL thakbe na (payment bypass block).
+    let user: any = null;
+    try { user = await getUserFromRequest(req); } catch {}
+    let allAllowed = !!user && user.role === "admin";
+    let allowedIds = new Set<string>();
+    if (user && !allAllowed) {
+      try {
+        const reqRes = await pool.query(`SELECT video_id FROM video_requests WHERE user_id=$1 AND status='approved'`, [user.id]);
+        if (reqRes.rows.some((r: any) => r.video_id === "full_access")) {
+          allAllowed = true;
+        } else {
+          for (const r of reqRes.rows) allowedIds.add(String(r.video_id));
+        }
+      } catch {}
+    }
+    const videos = res.rows.map((v: any) => {
+      if (allAllowed || allowedIds.has(String(v.id))) return v;
+      const { video_url, ...safe } = v;
+      return safe;
+    });
+    return NextResponse.json({ ok: true, videos }, { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } });
   } catch (e) {
     console.error("videos GET error:", e);
     return NextResponse.json({ ok: false, error: "Failed to load videos" }, { status: 500 });
