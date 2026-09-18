@@ -132,10 +132,16 @@ export default function AdminDashboard() {
     } catch {}
   }
 
+  // Video requests loader — no-store + 15s auto-refresh (user cancel korle admin list e sathe sathe hariye jabe)
+  const loadVideoReqs = () => {
+    fetch("/api/video-requests", { cache: "no-store", credentials: "include" }).then(r=>r.json()).then(j=>{ if(j.ok) setVideoReqs(j.requests||[]); setVideoReqsLoading(false)}).catch(()=> setVideoReqsLoading(false))
+  }
   useEffect(() => {
     if (activeSection !== "content") return
     setVideoReqsLoading(true)
-    fetch("/api/video-requests").then(r=>r.json()).then(j=>{ if(j.ok) setVideoReqs(j.requests||[]); setVideoReqsLoading(false)}).catch(()=> setVideoReqsLoading(false))
+    loadVideoReqs()
+    const iv = setInterval(loadVideoReqs, 15000)
+    return () => clearInterval(iv)
   }, [activeSection])
 
   // Video management loader
@@ -209,6 +215,11 @@ export default function AdminDashboard() {
 
   const handleVideoAction = async (id:number, status:string) => {
     try { const r=await fetch("/api/video-requests",{method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({id, status})}); if(r.ok) setVideoReqs((prev:any)=> prev.map((x:any)=> x.id===id ? {...x, status}:x)); } catch {}
+  }
+
+  // Admin delete — request list theke puropuri remove (cancelled/old entries clean korte)
+  const deleteVideoReq = async (id:number) => {
+    try { const r=await fetch(`/api/video-requests?id=${id}`, { method:"DELETE", credentials:"include" }); if(r.ok) setVideoReqs((prev:any)=> prev.filter((x:any)=> x.id!==id)); } catch {}
   }
 
   const totalUsers = dbUsers.length;
@@ -563,7 +574,11 @@ export default function AdminDashboard() {
             {/* CONTENT - Video Requests */}
             {activeSection === "content" && (
               <div className="space-y-4">
-                <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Video Requests - Approve to Unlock</h3>
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Video Requests - Approve to Unlock</h3>
+                  <button onClick={()=>{ setVideoReqsLoading(true); loadVideoReqs() }} className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${isDark?"bg-dark-800 border-dark-600 text-gray-300 hover:bg-dark-700":"bg-white border-gray-200 text-gray-600 hover:bg-gray-50"}`}>🔄 Refresh</button>
+                </div>
+                <p className={`text-xs ${isDark?"text-gray-500":"text-gray-400"}`}>Auto-refreshes every 15s — user cancel korle cancelled request ekhane auto remove hobe.</p>
                 {videoReqsLoading ? <div className={`text-sm ${isDark?"text-gray-400":"text-gray-500"}`}>Loading...</div> : videoReqs.length===0 ? <div className={`text-sm ${isDark?"text-gray-400":"text-gray-500"} border rounded-xl p-6 text-center ${isDark?"bg-dark-800 border-dark-700":"bg-white border-gray-100"}`}>No video requests yet. When users click "Request" on videos page, it will appear here.</div> : (
                   <div className={`${isDark?"bg-dark-800 border-dark-700":"bg-white border-gray-100"} border rounded-2xl overflow-hidden`}>
                     <div className="overflow-x-auto">
@@ -585,6 +600,7 @@ export default function AdminDashboard() {
                               <td className="px-4 py-3 flex gap-2">
                                 {r.status!=='approved' && <button onClick={()=>handleVideoAction(r.id,'approved')} className="bg-green-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-green-700">Approve</button>}
                                 {r.status!=='rejected' && <button onClick={()=>handleVideoAction(r.id,'rejected')} className="bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-red-700">Reject</button>}
+                                <button onClick={()=>deleteVideoReq(r.id)} title="Delete from list" className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${isDark?"border-dark-600 text-gray-400 hover:bg-red-500/10 hover:text-red-400":"border-gray-200 text-gray-500 hover:bg-red-500/10 hover:text-red-600"}`}>🗑</button>
                               </td>
                             </tr>
                           ))}

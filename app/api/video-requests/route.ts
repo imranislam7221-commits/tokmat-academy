@@ -21,18 +21,19 @@ async function ensureTable() {
 }
 
 export async function GET(req: Request) {
-  // admin sees all, user sees own
+  // admin sees all, user sees own (no-store — cancel korle admin panel e sathe sathe hariye jabe, cache dekhabe na)
   const user = await getUser(req);
   if (!user) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   await ensureTable();
+  const noStore = { "Cache-Control": "no-store, no-cache, must-revalidate" };
   if (user.role === "admin") {
     const res = await pool.query(`SELECT vr.*, u.email, u.first_name FROM video_requests vr JOIN users u ON u.id=vr.user_id ORDER BY vr.created_at DESC LIMIT 200`);
-    return NextResponse.json({ ok: true, requests: res.rows });
+    return NextResponse.json({ ok: true, requests: res.rows }, { headers: noStore });
   } else {
     const res = await pool.query(`SELECT * FROM video_requests WHERE user_id=$1 ORDER BY created_at DESC`, [user.id]);
     // full access check — approved hole flag on
     const hasFullAccess = res.rows.some((r: any) => r.video_id === "full_access" && r.status === "approved");
-    return NextResponse.json({ ok: true, requests: res.rows, fullAccess: hasFullAccess });
+    return NextResponse.json({ ok: true, requests: res.rows, fullAccess: hasFullAccess }, { headers: noStore });
   }
 }
 
