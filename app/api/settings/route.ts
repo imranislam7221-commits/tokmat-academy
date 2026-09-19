@@ -5,6 +5,9 @@ import { getUserFromRequest } from "../auth/route";
 // Site settings — admin panel theke control kora jay.
 // GET (public): settings e khule rakha value gulo (offer banner etc.)
 // PUT: sudhu admin — settings update
+// force-dynamic: admin save korle sathe sathe sob page e notun value jabe (cache hole deadline/time dekhato na)
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const PUBLIC_KEYS = [
   "offer_enabled",
@@ -56,7 +59,7 @@ export async function GET() {
     for (const [key, value] of Object.entries(DEFAULTS)) {
       if (!(key in settings)) settings[key] = value;
     }
-    return NextResponse.json({ ok: true, settings });
+    return NextResponse.json({ ok: true, settings }, { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } });
   } catch (e) {
     console.error("settings GET error:", e);
     return NextResponse.json({ ok: false, error: "Failed to load settings" }, { status: 500 });
