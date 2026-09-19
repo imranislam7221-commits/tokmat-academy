@@ -207,7 +207,6 @@ export default function FullCoursesPage() {
               {access === "unpaid" && (
                 <>
                   <p className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>🔓 Unlock ALL Full Courses — $100 one-time payment</p>
-                  <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>Lifetime access • Pay once, watch everything forever</p>
                   {requestState === "pending" ? (
                     <div className="mt-4 inline-flex items-center gap-3 bg-yellow-500/10 border border-yellow-500/40 text-yellow-500 font-bold text-sm pl-6 pr-3 py-3 rounded-xl">
                       <span>⏳ Request pending — Admin will contact you for payment</span>
