@@ -16,7 +16,7 @@ export function FloatingChat() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Live Chat"
-      className="fixed bottom-8 right-5 z-50 group flex items-center gap-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xs pl-2.5 pr-3 py-2 rounded-full shadow-2xl shadow-green-500/40 hover:shadow-green-500/60 hover:scale-105 transition-all duration-300"
+      className="fixed bottom-8 right-5 z-50 group flex items-center gap-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-sm pl-3 pr-4 py-3 rounded-full shadow-2xl shadow-green-500/40 hover:shadow-green-500/60 hover:scale-105 transition-all duration-300"
     >
       {/* Online dot */}
       <span className="relative flex h-2 w-2">
@@ -24,7 +24,7 @@ export function FloatingChat() {
         <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
       </span>
       {/* Chat icon */}
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
       </svg>
       Live Chat
