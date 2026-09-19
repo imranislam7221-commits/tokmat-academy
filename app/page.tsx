@@ -253,7 +253,7 @@ export default function Home() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {[
                 { end: 50000, suffix: "+", label: t("statsTraders"), color: "from-blue-500 to-blue-600", icon: "👥" },
-                { end: 16000, suffix: "+", label: t("statsSignals"), color: "from-green-500 to-emerald-600", icon: "📡" },
+                { end: 5500, suffix: "+", label: t("statsSignals"), color: "from-green-500 to-emerald-600", icon: "📡" },
                 { end: 85, suffix: "%", label: t("statsWinRate"), color: "from-purple-500 to-purple-600", icon: "🎯" },
                 { end: 100, suffix: "+", label: t("statsCountries"), color: "from-orange-500 to-orange-600", icon: "🌍" },
               ].map((stat, i) => (
