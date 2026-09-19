@@ -16,6 +16,7 @@ export default function RegisterPage() {
 
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
+  const [country, setCountry] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -64,7 +65,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "register", firstName, lastName, email: email.trim(), password }),
+        body: JSON.stringify({ action: "register", firstName, lastName, email: email.trim(), password, country }),
       })
       const data = await res.json()
       if (res.ok && data.ok) {
@@ -167,6 +168,17 @@ export default function RegisterPage() {
                   className={`w-full px-4 py-3 rounded-xl border outline-none transition-all text-sm ${errors.lastName ? "border-red-400 bg-red-50" : isDark ? "bg-dark-700 border-dark-600 text-white placeholder-gray-500" : "border-gray-200"}`} />
                 {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>}
               </div>
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>Country</label>
+              <select value={country} onChange={(e) => setCountry(e.target.value)}
+                className={`w-full px-4 py-3 rounded-xl border outline-none transition-all text-sm ${isDark ? "bg-dark-700 border-dark-600 text-white" : "border-gray-200 bg-white text-gray-900"}`}>
+                <option value="">Select your country</option>
+                {["Afghanistan","Albania","Algeria","Argentina","Australia","Austria","Bahrain","Bangladesh","Belgium","Brazil","Canada","Chile","China","Colombia","Croatia","Czech Republic","Denmark","Egypt","Ethiopia","Finland","France","Germany","Ghana","Greece","Hong Kong","Hungary","Iceland","India","Indonesia","Iraq","Ireland","Italy","Japan","Jordan","Kenya","Kuwait","Latvia","Lebanon","Libya","Lithuania","Malaysia","Maldives","Mexico","Morocco","Nepal","Netherlands","New Zealand","Nigeria","Norway","Oman","Pakistan","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Saudi Arabia","Serbia","Singapore","Slovakia","Slovenia","South Africa","South Korea","Spain","Sri Lanka","Sudan","Sweden","Switzerland","Taiwan","Tanzania","Thailand","Turkey","UAE","Uganda","Ukraine","United Kingdom","United States","Uzbekistan","Venezuela","Vietnam","Yemen"].map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
 
             <div>

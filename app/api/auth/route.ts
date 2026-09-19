@@ -142,7 +142,7 @@ export { getUserByToken, getUserFromRequest, revokeRequestTokens, COOKIE_NAME };
 
 export async function POST(req: Request) {
   try {
-    const { action, firstName, lastName, email, password } = await req.json();
+    const { action, firstName, lastName, email, password, country } = await req.json();
 
     const emailNorm = email ? String(email).trim().toLowerCase() : "";
 
@@ -234,9 +234,9 @@ export async function POST(req: Request) {
       const role = ADMIN_EMAILS.includes(emailNorm) ? "admin" : "user";
 
       const res = await pool.query(
-        `INSERT INTO users (first_name, last_name, email, password_hash, role)
-         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [firstName.trim(), (lastName || "").trim(), emailNorm, hash, role]
+        `INSERT INTO users (first_name, last_name, email, password_hash, role, country)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [firstName.trim(), (lastName || "").trim(), emailNorm, hash, role, (country || "").trim()]
       );
       const user = res.rows[0] as DbUser;
 

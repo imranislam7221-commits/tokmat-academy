@@ -38,6 +38,8 @@ export function initDb(): Promise<void> {
           last_login TIMESTAMPTZ
         )
       `);
+      // Migration: country column (testimonial section e real user dekhate use hoy)
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS country TEXT NOT NULL DEFAULT ''`);
       await pool.query(`
         CREATE TABLE IF NOT EXISTS sessions (
           token TEXT PRIMARY KEY,

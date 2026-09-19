@@ -35,6 +35,22 @@ export default function Home() {
   const [locale, setLocale] = useState<Locale>("en")
   const [mounted, setMounted] = useState(false)
   const [visibleReviews, setVisibleReviews] = useState(6)
+  const [realUsers, setRealUsers] = useState<{ name: string; country: string; joined: string }[]>([])
+  // Real DB counts — hero stats er mock number er sathe merge hobe (mock + real)
+  const [realStats, setRealStats] = useState<{ users: number; signals: number; winRate: number | null; resolved: number; countries: number }>(
+    { users: 0, signals: 0, winRate: null, resolved: 0, countries: 0 }
+  )
+
+  // Real registered users — testimonial section e ekjon ekjon kore add hoi (notun age)
+  useEffect(() => {
+    fetch("/api/testimonials")
+      .then(r => r.json())
+      .then(j => {
+        if (j.ok && Array.isArray(j.testimonials)) setRealUsers(j.testimonials)
+        if (j.ok && j.stats) setRealStats(j.stats)
+      })
+      .catch(() => {})
+  }, [])
   
   const { theme } = useTheme()
   const { telegramLink } = useSiteSettings()
@@ -252,10 +268,15 @@ export default function Home() {
           <div className={`rounded-2xl shadow-elevated border backdrop-blur-xl p-8 transition-colors ${isDark ? "bg-white/5 border-white/10" : "bg-white/60 border-white/30"}`}>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {[
-                { end: 50000, suffix: "+", label: t("statsTraders"), color: "from-blue-500 to-blue-600", icon: "👥" },
-                { end: 5500, suffix: "+", label: t("statsSignals"), color: "from-green-500 to-emerald-600", icon: "📡" },
-                { end: 85, suffix: "%", label: t("statsWinRate"), color: "from-purple-500 to-purple-600", icon: "🎯" },
-                { end: 100, suffix: "+", label: t("statsCountries"), color: "from-orange-500 to-orange-600", icon: "🌍" },
+                // Mock base + REAL DB count — notun user add hole number barbe (jemon ache temnai dekhabe)
+                { end: 50000 + realStats.users, suffix: "+", label: t("statsTraders"), color: "from-blue-500 to-blue-600", icon: "👥" },
+                { end: 5500 + realStats.signals, suffix: "+", label: t("statsSignals"), color: "from-green-500 to-emerald-600", icon: "📡" },
+                // Win rate: real signal outcome (TP Hit vs resolved) mock 85% er sathe blend hoy —
+                // real data kom hole 85% ei thakbe, beshi hole dhire dhire real dike jabe
+                { end: Math.round(realStats.winRate != null
+                    ? (85 * 100 + realStats.winRate * Math.min(realStats.resolved, 50)) / (100 + Math.min(realStats.resolved, 50))
+                    : 85), suffix: "%", label: t("statsWinRate"), color: "from-purple-500 to-purple-600", icon: "🎯" },
+                { end: 100 + realStats.countries, suffix: "+", label: t("statsCountries"), color: "from-orange-500 to-orange-600", icon: "🌍" },
               ].map((stat, i) => (
                 <div key={i} className="text-center group cursor-default">
                   <div className="text-2xl mb-2">{stat.icon}</div>
@@ -662,13 +683,25 @@ export default function Home() {
             const countries = ["Saudi Arabia", "Malaysia", "France", "USA", "UAE", "UK", "Kuwait", "Canada", "Qatar", "Spain", "Germany", "Egypt", "Italy", "Japan", "Brazil", "India", "Russia", "Morocco", "Korea", "Indonesia"];
             // Khuchra profit figure — round number na, jate realistic lage
             const profits = ["+$5,193", "+$3,847", "+$7,126", "+$2,372", "+$6,534", "+$4,918", "+$8,241", "+$3,057", "+$5,829", "+$9,346", "+$2,874", "+$6,152", "+$4,381", "+$7,793", "+$3,628", "+$5,467", "+$8,912", "+$4,235", "+$6,749", "+$3,916"];
-            const allReviews = Array.from({ length: 120 }, (_, i) => ({
+            const mockReviews = Array.from({ length: 120 }, (_, i) => ({
               text: baseTexts[i % baseTexts.length],
               name: names[i % names.length],
               country: countries[i % countries.length],
               profit: profits[i % profits.length],
               initial: names[i % names.length].charAt(0),
+              isReal: false,
             }));
+            // Real users sohbe age — tarpor mock (khuchra profit figure o baki)
+            const realCards = realUsers.map((u, i) => ({
+              text: "",
+              name: u.name,
+              country: u.country || "Global",
+              profit: "",
+              initial: u.name.charAt(0).toUpperCase(),
+              isReal: true,
+              joined: u.joined,
+            }));
+            const allReviews = [...realCards, ...mockReviews];
             return (
               <>
                 <div className="grid md:grid-cols-3 gap-6">
@@ -679,7 +712,11 @@ export default function Home() {
                           <svg key={j} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                         ))}
                       </div>
-                      <p className={`text-sm leading-relaxed mb-4 ${isDark ? "text-gray-400" : "text-gray-600"}`}>{r.text}</p>
+                      {r.isReal ? (
+                        <p className={`text-sm leading-relaxed mb-4 italic ${isDark ? "text-blue-300" : "text-blue-600"}`}>✅ Verified member — joined our academy</p>
+                      ) : (
+                        <p className={`text-sm leading-relaxed mb-4 ${isDark ? "text-gray-400" : "text-gray-600"}`}>{r.text}</p>
+                      )}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
@@ -690,7 +727,11 @@ export default function Home() {
                             <div className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>{r.country}</div>
                           </div>
                         </div>
-                        <span className="text-green-500 font-bold text-sm trading-price">{r.profit}</span>
+                        {r.isReal ? (
+                          <span className={`text-xs font-semibold ${isDark ? "text-gray-500" : "text-gray-400"}`}>Member</span>
+                        ) : (
+                          <span className="text-green-500 font-bold text-sm trading-price">{r.profit}</span>
+                        )}
                       </div>
                     </div>
                   ))}
