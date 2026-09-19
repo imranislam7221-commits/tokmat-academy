@@ -40,7 +40,7 @@ const DEFAULTS: Record<string, string> = {
   offer_deadline: "",
   offer_cta_text: "Join Now — It's Free",
   site_name: "Tokmat Academy",
-  support_email: "support@tokmatacademy.com",
+  support_email: "maasum1231@gmail.com",
   telegram_link: "https://t.me/TokmatSignal",
   max_free_signals: "3",
 };
@@ -52,6 +52,8 @@ export async function GET() {
     for (const [key, value] of Object.entries(DEFAULTS)) {
       await pool.query(`INSERT INTO site_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING`, [key, value]);
     }
+    // One-time migration: purano placeholder email -> real Gmail (already-seeded DB teo kaj kore)
+    await pool.query(`UPDATE site_settings SET value='maasum1231@gmail.com' WHERE key='support_email' AND value='support@tokmatacademy.com'`);
     const res = await pool.query(`SELECT key, value FROM site_settings WHERE key = ANY($1)`, [PUBLIC_KEYS]);
     const settings: Record<string, string> = {};
     for (const row of res.rows) settings[row.key] = row.value;
