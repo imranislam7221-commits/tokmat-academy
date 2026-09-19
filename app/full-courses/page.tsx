@@ -49,6 +49,26 @@ export default function FullCoursesPage() {
       .catch(() => setAccess("guest"))
   }, [])
 
+  // Full Access pending request cancel — videos page er moto (sudhu pending cancel hoy)
+  const cancelFullAccess = async () => {
+    try {
+      // full_access pending request khunje cancel kori
+      const res = await fetch("/api/video-requests", { cache: "no-store", credentials: "include" })
+      const j = await res.json()
+      const fr = (j.requests || []).find((r: any) => r.video_id === "full_access" && r.status === "pending")
+      if (!fr) { setToast("⚠️ No pending request found"); setTimeout(() => setToast(""), 3500); return }
+      const del = await fetch(`/api/video-requests?id=${fr.id}`, { method: "DELETE", credentials: "include" })
+      const dj = await del.json()
+      if (dj.ok) {
+        setRequestState("none")
+        setToast("✅ Request cancelled — you can request again anytime")
+      } else {
+        setToast("⚠️ " + (dj.error || "Failed to cancel"))
+      }
+    } catch { setToast("❌ Something went wrong") }
+    setTimeout(() => setToast(""), 3500)
+  }
+
   const requestFullAccess = async () => {
     try {
       const res = await fetch("/api/video-requests", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) })
@@ -164,8 +184,9 @@ export default function FullCoursesPage() {
                   <p className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>🔓 Unlock ALL Full Courses — $100 one-time payment</p>
                   <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>Lifetime access • Pay once, watch everything forever</p>
                   {requestState === "pending" ? (
-                    <div className="mt-4 inline-flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/40 text-yellow-500 font-bold text-sm px-6 py-3 rounded-xl">
-                      ⏳ Request pending — Admin will contact you for payment
+                    <div className="mt-4 inline-flex items-center gap-3 bg-yellow-500/10 border border-yellow-500/40 text-yellow-500 font-bold text-sm pl-6 pr-3 py-3 rounded-xl">
+                      <span>⏳ Request pending — Admin will contact you for payment</span>
+                      <button onClick={cancelFullAccess} title="Cancel request" className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 hover:bg-red-500/30 border border-red-500/40 text-red-500 font-bold transition-colors">✕</button>
                     </div>
                   ) : (
                     <button onClick={requestFullAccess} className="mt-4 block mx-auto bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-lg shadow-green-500/30">
