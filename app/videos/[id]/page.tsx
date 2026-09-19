@@ -30,7 +30,8 @@ export default function VideoDetailPage() {
 
   const [authState, setAuthState] = useState<"loading" | "ok" | "denied">("loading")
   const [activeLesson, setActiveLesson] = useState(1)
-  const lessonSrc = video?.video_url || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+  // video_url admin set kore — URL na thakle error message dekhabe (mock video nai)
+  const lessonSrc = video?.video_url || ""
 
   // YouTube link hole embed player, nahole direct video tag
   const ytMatch = lessonSrc?.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,20})/)
@@ -104,6 +105,15 @@ export default function VideoDetailPage() {
         </Link>
 
         {/* Player — admin-set video URL (mp4 direct playback, YouTube auto-embed) */}
+        {!lessonSrc ? (
+          <div className={`relative aspect-video rounded-2xl overflow-hidden mb-6 shadow-2xl flex items-center justify-center ${isDark ? "bg-dark-800" : "bg-gray-100"}`}>
+            <div className="text-center px-4">
+              <div className="text-4xl mb-2">🎬</div>
+              <p className={`font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Video coming soon</p>
+              <p className={`text-sm mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>The admin hasn&apos;t uploaded this video yet.</p>
+            </div>
+          </div>
+        ) : (
         <div className="relative aspect-video rounded-2xl overflow-hidden bg-black mb-6 shadow-2xl">
           {ytMatch ? (
             <iframe
@@ -125,6 +135,7 @@ export default function VideoDetailPage() {
             />
           )}
         </div>
+        )}
 
         {/* Info */}
         <h1 className={`text-2xl md:text-3xl font-extrabold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>{video.title}</h1>
