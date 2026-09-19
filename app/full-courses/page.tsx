@@ -41,6 +41,8 @@ export default function FullCoursesPage() {
       .then((r) => r.json())
       .then((j) => {
         if (!j.ok || !j.user) { setAccess("guest"); return }
+        // Admin sob video dekhte pare — payment button dekhabe na
+        if (j.user.role === "admin") { setAccess("paid"); return }
         return fetch("/api/video-requests", { cache: "no-store", credentials: "include" })
           .then((r) => r.json())
           .then((v) => {
