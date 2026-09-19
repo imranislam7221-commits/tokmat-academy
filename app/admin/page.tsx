@@ -39,7 +39,7 @@ export default function AdminDashboard() {
   const [uploadMsg, setUploadMsg] = useState("")
   // Limited Offer banner + site settings (site_settings table theke)
   const [offerSettings, setOfferSettings] = useState({ enabled: true, title: "", subtitle: "", deadline: "", ctaText: "" })
-  const [siteSettings, setSiteSettings] = useState({ site_name: "", support_email: "", telegram_link: "", max_free_signals: "" })
+  const [siteSettings, setSiteSettings] = useState({ site_name: "", support_email: "", telegram_link: "", chat_telegram_link: "", max_free_signals: "" })
   const [offerSaving, setOfferSaving] = useState(false)
 
   useEffect(() => {
@@ -56,6 +56,7 @@ export default function AdminDashboard() {
           site_name: j.settings.site_name || "",
           support_email: j.settings.support_email || "",
           telegram_link: j.settings.telegram_link || "",
+          chat_telegram_link: j.settings.chat_telegram_link || "",
           max_free_signals: j.settings.max_free_signals || "",
         })
       }
@@ -64,7 +65,7 @@ export default function AdminDashboard() {
 
   const saveSiteSettings = async () => {
     try {
-      const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ site_name: siteSettings.site_name, support_email: siteSettings.support_email, telegram_link: siteSettings.telegram_link, max_free_signals: siteSettings.max_free_signals }) })
+      const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ site_name: siteSettings.site_name, support_email: siteSettings.support_email, telegram_link: siteSettings.telegram_link, chat_telegram_link: siteSettings.chat_telegram_link, max_free_signals: siteSettings.max_free_signals }) })
       if (res.ok) {
         const el = document.createElement("div"); el.textContent = "Site settings saved!"; el.className = "fixed bottom-6 right-6 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm font-bold"; document.body.appendChild(el); setTimeout(()=>el.remove(), 2500)
       }
@@ -683,6 +684,10 @@ export default function AdminDashboard() {
                     <div>
                       <label className={`text-xs font-semibold mb-1 block ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t("telegramLink")}</label>
                       <input type="text" value={siteSettings.telegram_link} onChange={(e) => setSiteSettings({ ...siteSettings, telegram_link: e.target.value })} className={`w-full px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                    </div>
+                    <div>
+                      <label className={`text-xs font-semibold mb-1 block ${isDark ? "text-gray-400" : "text-gray-500"}`}>💬 Live Chat Link</label>
+                      <input type="text" value={siteSettings.chat_telegram_link} onChange={(e) => setSiteSettings({ ...siteSettings, chat_telegram_link: e.target.value })} className={`w-full px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
                     </div>
                     <div>
                       <label className={`text-xs font-semibold mb-1 block ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t("maxFreeSignals")}</label>

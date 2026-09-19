@@ -4,10 +4,11 @@ import { useSiteSettings } from "@/lib/useSiteSettings"
 
 // Floating Live Chat button — sob page e dan pashe niche.
 // Name "Live Chat" dekhabe, click korle Telegram e open hoy.
-// Telegram link site_settings theke ase (admin Settings e change korte parbe).
+// Link chat_telegram_link settings theke ase (admin Settings e alada change korte parbe —
+// main telegram_link er sathe share kore na).
 
 export function FloatingChat() {
-  const { telegramLink: tgLink } = useSiteSettings()
+  const { chatTelegramLink: tgLink } = useSiteSettings()
 
   return (
     <a

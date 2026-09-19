@@ -24,6 +24,7 @@ async function loadSettings(): Promise<Record<string, string>> {
 
 export function useSiteSettings() {
   const [telegramLink, setTelegramLink] = useState("https://t.me/TokmatSignal")
+  const [chatTelegramLink, setChatTelegramLink] = useState("https://t.me/tokmatgoldhuntar")
   const [siteName, setSiteName] = useState("Tokmat Academy")
   const [supportEmail, setSupportEmail] = useState("maasum1231@gmail.com")
   const [maxFreeSignals, setMaxFreeSignals] = useState(3)
@@ -32,6 +33,7 @@ export function useSiteSettings() {
   useEffect(() => {
     loadSettings().then((s) => {
       if (s.telegram_link) setTelegramLink(s.telegram_link)
+      if (s.chat_telegram_link) setChatTelegramLink(s.chat_telegram_link)
       if (s.site_name) setSiteName(s.site_name)
       if (s.support_email) setSupportEmail(s.support_email)
       if (s.max_free_signals) setMaxFreeSignals(Number(s.max_free_signals) || 3)
@@ -39,5 +41,5 @@ export function useSiteSettings() {
     })
   }, [])
 
-  return { telegramLink, siteName, supportEmail, maxFreeSignals, loaded }
+  return { telegramLink, chatTelegramLink, siteName, supportEmail, maxFreeSignals, loaded }
 }

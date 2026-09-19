@@ -18,6 +18,7 @@ const PUBLIC_KEYS = [
   "site_name",
   "support_email",
   "telegram_link",
+  "chat_telegram_link",
   "max_free_signals",
 ];
 
@@ -42,6 +43,7 @@ const DEFAULTS: Record<string, string> = {
   site_name: "Tokmat Academy",
   support_email: "maasum1231@gmail.com",
   telegram_link: "https://t.me/TokmatSignal",
+  chat_telegram_link: "https://t.me/tokmatgoldhuntar",
   max_free_signals: "3",
 };
 
