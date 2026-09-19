@@ -17,7 +17,7 @@ export default function VideosPage() {
   const [allVideos, setAllVideos] = useState<any[]>([])
   const [videosLoading, setVideosLoading] = useState(true)
   useEffect(()=>{
-    fetch("/api/videos").then(r=>r.json()).then(j=>{ setAllVideos(j.videos||[]); setVideosLoading(false) }).catch(()=> setVideosLoading(false))
+    fetch("/api/videos?category=single", { cache: "no-store" }).then(r=>r.json()).then(j=>{ setAllVideos(j.videos||[]); setVideosLoading(false) }).catch(()=> setVideosLoading(false))
   }, [])
   const [hasFullAccess, setHasFullAccess] = useState(false)
   useEffect(()=>{ fetch("/api/video-requests", { cache: "no-store", credentials: "include" }).then(r=>r.json()).then(j=>{ if(j.ok){ setMyRequests(j.requests||[]); setHasFullAccess(!!j.fullAccess || (j.requests||[]).some((r:any)=> r.video_id==="full_access" && r.status==="approved"))}}).catch(()=>{}) }, [])

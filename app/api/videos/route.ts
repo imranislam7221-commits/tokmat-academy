@@ -26,6 +26,8 @@ async function ensureTable() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
+  // category: 'single' (videos page) ba 'full' (full courses page) — 2 ta alada section
+  await pool.query(`ALTER TABLE videos ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'single'`);
 }
 
 // 12 ta default video — first load e ekbar auto-seed hoy
@@ -58,7 +60,11 @@ export async function GET(req: Request) {
         );
       }
     }
-    const res = await pool.query(`SELECT id, title, description, lessons, dur, price, img, video_url, sort_order FROM videos ORDER BY sort_order ASC, id ASC`);
+    const res = await pool.query(`SELECT id, title, description, lessons, dur, price, img, video_url, sort_order, category FROM videos ORDER BY sort_order ASC, id ASC`);
+
+    // optional category filter — ?category=single (videos page) ba ?category=full (full-courses page)
+    const { searchParams } = new URL(req.url);
+    const catFilter = searchParams.get("category");
 
     // SECURITY: video_url sudhu authorized viewer ke dekhay —
     // admin (sob), full_access approved user (sob), ba je video tar request approved (oi video ta).
@@ -77,7 +83,10 @@ export async function GET(req: Request) {
         }
       } catch {}
     }
-    const videos = res.rows.map((v: any) => {
+    const filtered = catFilter === "single" || catFilter === "full"
+      ? res.rows.filter((v: any) => (v.category || "single") === catFilter)
+      : res.rows;
+    const videos = filtered.map((v: any) => {
       if (allAllowed || allowedIds.has(String(v.id))) return v;
       const { video_url, ...safe } = v;
       return safe;
@@ -98,13 +107,14 @@ export async function POST(req: Request) {
     await ensureTable();
     const body_ = await req.json();
     // frontend "desc" pathay — DB column "description"
-    const { title, desc, description, lessons, dur, price, img, video_url, sort_order } = body_;
+    const { title, desc, description, lessons, dur, price, img, video_url, sort_order, category } = body_;
     if (!title) return NextResponse.json({ ok: false, error: "Title required" }, { status: 400 });
     const descVal = description ?? desc ?? "";
+    const catVal = category === "full" ? "full" : "single";
     const maxRes = await pool.query(`SELECT COALESCE(MAX(sort_order), -1) + 1 AS next FROM videos`);
     const res = await pool.query(
-      `INSERT INTO videos (title, description, lessons, dur, price, img, video_url, sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-      [title, descVal, Number(lessons) || 1, dur || "", price || "$5", img || "", video_url || "", sort_order ?? maxRes.rows[0].next]
+      `INSERT INTO videos (title, description, lessons, dur, price, img, video_url, sort_order, category) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+      [title, descVal, Number(lessons) || 1, dur || "", price || "$5", img || "", video_url || "", sort_order ?? maxRes.rows[0].next, catVal]
     );
     return NextResponse.json({ ok: true, video: res.rows[0] });
   } catch (e) {
@@ -125,7 +135,7 @@ export async function PATCH(req: Request) {
     if (!id) return NextResponse.json({ ok: false, error: "Video id required" }, { status: 400 });
     // frontend "desc" pathay — DB column "description"
     if ("desc" in fields) { fields.description = fields.desc; delete fields.desc; }
-    const allowed = ["title", "description", "lessons", "dur", "price", "img", "video_url", "sort_order"];
+    const allowed = ["title", "description", "lessons", "dur", "price", "img", "video_url", "sort_order", "category"];
     const sets: string[] = [];
     const vals: any[] = [];
     let i = 1;

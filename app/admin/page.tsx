@@ -30,7 +30,9 @@ export default function AdminDashboard() {
   const [videosLoading, setVideosLoading] = useState(false)
   const [showVideoForm, setShowVideoForm] = useState(false)
   const [editingVideo, setEditingVideo] = useState<any>(null)
-  const [videoForm, setVideoForm] = useState({ title: "", desc: "", lessons: "5", dur: "", price: "$5", img: "", video_url: "" })
+  const [videoForm, setVideoForm] = useState({ title: "", desc: "", lessons: "5", dur: "", price: "$5", img: "", video_url: "", category: "single" })
+  // 2 ta alada video section: single (videos page) + full (full-courses page)
+  const [videoTab, setVideoTab] = useState<"single" | "full">("single")
   // Direct video upload state
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -157,10 +159,10 @@ export default function AdminDashboard() {
   const openVideoForm = (v?: any) => {
     if (v) {
       setEditingVideo(v)
-      setVideoForm({ title: v.title||"", desc: v.desc||"", lessons: String(v.lessons||1), dur: v.dur||"", price: v.price||"$5", img: v.img||"", video_url: v.video_url||"" })
+      setVideoForm({ title: v.title||"", desc: v.desc||"", lessons: String(v.lessons||1), dur: v.dur||"", price: v.price||"$5", img: v.img||"", video_url: v.video_url||"", category: v.category === "full" ? "full" : "single" })
     } else {
       setEditingVideo(null)
-      setVideoForm({ title: "", desc: "", lessons: "5", dur: "", price: "$5", img: "", video_url: "" })
+      setVideoForm({ title: "", desc: "", lessons: "5", dur: "", price: "$5", img: "", video_url: "", category: videoTab })
     }
     setShowVideoForm(true)
   }
@@ -471,13 +473,23 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* VIDEOS - Video Management */}
+            {/* VIDEOS - Video Management — 2 ta alada section: Single + Full Courses */}
             {activeSection === "videos" && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>🎬 Video Management</h3>
                   <button onClick={() => openVideoForm()} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors flex items-center gap-2">
                     <span>+</span> Add Video
+                  </button>
+                </div>
+
+                {/* 2 tabs: Single Videos (videos page) + Full Courses (full-courses page) */}
+                <div className={`flex gap-2 p-1 rounded-xl w-fit ${isDark ? "bg-dark-800" : "bg-gray-100"}`}>
+                  <button onClick={() => setVideoTab("single")} className={`px-5 py-2 rounded-lg text-sm font-bold transition-colors ${videoTab === "single" ? "bg-blue-600 text-white shadow" : isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}>
+                    🎯 Single Videos ({(dbVideos || []).filter((v: any) => (v.category || "single") === "single").length})
+                  </button>
+                  <button onClick={() => setVideoTab("full")} className={`px-5 py-2 rounded-lg text-sm font-bold transition-colors ${videoTab === "full" ? "bg-purple-600 text-white shadow" : isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}>
+                    🎓 Full Courses ({(dbVideos || []).filter((v: any) => v.category === "full").length})
                   </button>
                 </div>
 
@@ -515,6 +527,15 @@ export default function AdminDashboard() {
                       </div>
 
                       <input type="text" placeholder="Video URL (upload korle auto boshbe, nato paste koro)" value={videoForm.video_url} onChange={(e) => setVideoForm({ ...videoForm, video_url: e.target.value })} className={`px-3 py-2.5 rounded-xl text-sm border outline-none md:col-span-2 ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+
+                      {/* Category — kon section e dekhabe: Videos page (single) na Full Courses page (full) */}
+                      <label className={`md:col-span-2 text-xs font-semibold flex items-center gap-2 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                        📂 Section:
+                        <select value={videoForm.category} onChange={(e) => setVideoForm({ ...videoForm, category: e.target.value })} className={`px-3 py-2 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`}>
+                          <option value="single">🎯 Single Video (Videos page)</option>
+                          <option value="full">🎓 Full Courses (Full Courses page)</option>
+                        </select>
+                      </label>
                     </div>
                     <div className="flex gap-3 mt-4">
                       <button onClick={saveVideo} className="bg-green-600 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-green-700 transition-colors">{editingVideo ? "Update Video" : "Add Video"}</button>
@@ -523,10 +544,10 @@ export default function AdminDashboard() {
                   </div>
                 )}
 
-                {/* Video List */}
+                {/* Video List — active tab onujayi filter */}
                 {videosLoading ? (
                   <div className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Loading videos...</div>
-                ) : dbVideos.length === 0 ? (
+                ) : dbVideos.filter((v: any) => videoTab === "full" ? v.category === "full" : (v.category || "single") === "single").length === 0 ? (
                   <div className={`text-sm border rounded-xl p-6 text-center ${isDark ? "bg-dark-800 border-dark-700 text-gray-400" : "bg-white border-gray-100 text-gray-500"}`}>No videos yet. Click "Add Video" to create the first one.</div>
                 ) : (
                   <div className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl overflow-hidden`}>
@@ -540,7 +561,7 @@ export default function AdminDashboard() {
                           </tr>
                         </thead>
                         <tbody className={`divide-y ${isDark ? "divide-dark-700" : "divide-gray-100"}`}>
-                          {dbVideos.map((v: any) => (
+                          {dbVideos.filter((v: any) => videoTab === "full" ? v.category === "full" : (v.category || "single") === "single").map((v: any) => (
                             <tr key={v.id} className={`transition-colors ${isDark ? "hover:bg-dark-700/50" : "hover:bg-gray-50"}`}>
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-3">
