@@ -25,7 +25,7 @@ async function loadSettings(): Promise<Record<string, string>> {
 export function useSiteSettings() {
   const [telegramLink, setTelegramLink] = useState("https://t.me/TokmatSignal")
   const [siteName, setSiteName] = useState("Tokmat Academy")
-  const [supportEmail, setSupportEmail] = useState("support@tokmatacademy.com")
+  const [supportEmail, setSupportEmail] = useState("maasum1231@gmail.com")
   const [maxFreeSignals, setMaxFreeSignals] = useState(3)
   const [loaded, setLoaded] = useState(false)
 
