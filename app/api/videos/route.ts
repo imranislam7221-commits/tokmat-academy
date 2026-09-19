@@ -46,6 +46,16 @@ const DEFAULT_VIDEOS = [
   { title: "Forex Fundamentals", desc: "Master the economic calendar and news trading.", lessons: 7, dur: "19:50", price: "$9", img: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=220&fit=crop", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
 ];
 
+// 6 ta Full Courses demo — Full Courses page er jonno (category='full')
+const DEFAULT_FULL_COURSES = [
+  { title: "Forex Basics", desc: "Pips, lots, leverage — master the basics.", lessons: 5, dur: "12:30", price: "$5", img: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=640&h=360&fit=crop", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+  { title: "Technical Analysis", desc: "Master chart patterns and indicators.", lessons: 8, dur: "18:45", price: "$8", img: "https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=640&h=360&fit=crop", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+  { title: "Risk Management", desc: "A proven system to protect your capital.", lessons: 4, dur: "09:20", price: "$5", img: "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?w=640&h=360&fit=crop", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+  { title: "Advanced Strategies", desc: "Professional setups used by funded traders.", lessons: 10, dur: "22:10", price: "$12", img: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=640&h=360&fit=crop", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+  { title: "Price Action", desc: "Read charts like institutional traders.", lessons: 6, dur: "15:40", price: "$8", img: "https://images.unsplash.com/photo-1516245834210-c4c142787335?w=640&h=360&fit=crop", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+  { title: "Trading Psychology", desc: "Build a winning trading mindset.", lessons: 4, dur: "10:15", price: "$5", img: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=640&h=360&fit=crop", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+];
+
 export async function GET(req: Request) {
   try {
     await ensureTable();
@@ -57,6 +67,17 @@ export async function GET(req: Request) {
         await pool.query(
           `INSERT INTO videos (title, description, lessons, dur, price, img, video_url, sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
           [v.title, v.desc, v.lessons, v.dur, v.price, v.img, v.video_url, i]
+        );
+      }
+    }
+    // Full Courses seed — jodi kono 'full' category video na thake, demo 6 ta add hoy (admin edit/delete korte parbe)
+    const fullCount = await pool.query(`SELECT COUNT(*)::int AS c FROM videos WHERE category='full'`);
+    if (fullCount.rows[0].c === 0) {
+      let so = 0;
+      for (const v of DEFAULT_FULL_COURSES) {
+        await pool.query(
+          `INSERT INTO videos (title, description, lessons, dur, price, img, video_url, sort_order, category) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'full')`,
+          [v.title, v.desc, v.lessons, v.dur, v.price, v.img, v.video_url, so++]
         );
       }
     }
