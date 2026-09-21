@@ -51,6 +51,15 @@ export default function Home() {
       })
       .catch(() => {})
   }, [])
+
+  // Admin uploaded screenshot reviews — SOBAR AGE dekhay (real users ar mock er age)
+  const [adminPosts, setAdminPosts] = useState<{ id: number; image_url: string; name: string; country: string }[]>([])
+  useEffect(() => {
+    fetch("/api/testimonial-posts")
+      .then(r => r.json())
+      .then(j => { if (j.ok && Array.isArray(j.posts)) setAdminPosts(j.posts) })
+      .catch(() => {})
+  }, [])
   
   const { theme } = useTheme()
   const { telegramLink } = useSiteSettings()
@@ -683,6 +692,17 @@ export default function Home() {
             const countries = ["Saudi Arabia", "Malaysia", "France", "USA", "UAE", "UK", "Kuwait", "Canada", "Qatar", "Spain", "Germany", "Egypt", "Italy", "Japan", "Brazil", "India", "Russia", "Morocco", "Korea", "Indonesia"];
             // Khuchra profit figure — round number na, jate realistic lage
             const profits = ["+$5,193", "+$3,847", "+$7,126", "+$2,372", "+$6,534", "+$4,918", "+$8,241", "+$3,057", "+$5,829", "+$9,346", "+$2,874", "+$6,152", "+$4,381", "+$7,793", "+$3,628", "+$5,467", "+$8,912", "+$4,235", "+$6,749", "+$3,916"];
+            // Admin screenshot posts SOBAR AGE — tarpor real users, tarpor mock
+            const postCards = adminPosts.map((p) => ({
+              text: "",
+              name: p.name || "Verified Trader",
+              country: p.country || "",
+              profit: "",
+              initial: (p.name || "T").charAt(0).toUpperCase(),
+              isReal: false,
+              isPost: true,
+              image: p.image_url,
+            }))
             const mockReviews = Array.from({ length: 120 }, (_, i) => ({
               text: baseTexts[i % baseTexts.length],
               name: names[i % names.length],
@@ -701,7 +721,7 @@ export default function Home() {
               isReal: true,
               joined: u.joined,
             }));
-            const allReviews = [...realCards, ...mockReviews];
+            const allReviews = [...postCards, ...realCards, ...mockReviews];
             return (
               <>
                 <div className="grid md:grid-cols-3 gap-6">
@@ -712,7 +732,12 @@ export default function Home() {
                           <svg key={j} className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                         ))}
                       </div>
-                      {r.isReal ? (
+                      {(r as any).isPost ? (
+                        <a href={(r as any).image} target="_blank" rel="noopener noreferrer" className="block mb-4 rounded-lg overflow-hidden border border-gray-200 dark:border-dark-600 hover:opacity-90 transition-opacity">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={(r as any).image} alt={`Review by ${(r as any).name}`} className="w-full h-auto object-cover" loading="lazy" />
+                        </a>
+                      ) : r.isReal ? (
                         <p className={`text-sm leading-relaxed mb-4 italic ${isDark ? "text-blue-300" : "text-blue-600"}`}>✅ Verified member — joined our academy</p>
                       ) : (
                         <p className={`text-sm leading-relaxed mb-4 ${isDark ? "text-gray-400" : "text-gray-600"}`}>{r.text}</p>
@@ -727,7 +752,9 @@ export default function Home() {
                             <div className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>{r.country}</div>
                           </div>
                         </div>
-                        {r.isReal ? (
+                        {(r as any).isPost ? (
+                          <span className={`text-xs font-bold ${isDark ? "text-yellow-400" : "text-yellow-600"}`}>📸 Proof</span>
+                        ) : r.isReal ? (
                           <span className={`text-xs font-semibold ${isDark ? "text-gray-500" : "text-gray-400"}`}>Member</span>
                         ) : (
                           <span className="text-green-500 font-bold text-sm trading-price">{r.profit}</span>

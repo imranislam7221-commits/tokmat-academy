@@ -18,7 +18,7 @@ export default function AdminDashboard() {
   const { theme } = useTheme()
   const isDark = theme === "dark"
   const [locale, setLocale] = useState<Locale>("en")
-  const [activeSection, setActiveSection] = useState<"overview" | "users" | "signals" | "videos" | "content" | "messages" | "settings">("overview")
+  const [activeSection, setActiveSection] = useState<"overview" | "users" | "signals" | "videos" | "content" | "messages" | "reviews" | "settings">("overview")
   const [showNewSignal, setShowNewSignal] = useState(false)
   const [newSignal, setNewSignal] = useState({ pair: "", direction: "BUY", entry: "", tp: "", sl: "" })
   const [mounted, setMounted] = useState(false)
@@ -243,6 +243,55 @@ export default function AdminDashboard() {
     loadContactMsgs()
   }, [activeSection])
   const unreadCount = contactMsgs.filter((m: any) => !m.is_read).length
+
+  // ===== Testimonial Posts (admin screenshot reviews) =====
+  const [adminPosts, setAdminPosts] = useState<any[]>([])
+  const [postsLoading, setPostsLoading] = useState(false)
+  const [postUploading, setPostUploading] = useState(false)
+  const [postName, setPostName] = useState("")
+  const [postCountry, setPostCountry] = useState("")
+  const [postFile, setPostFile] = useState<File | null>(null)
+  const [postMsg, setPostMsg] = useState("")
+  const loadAdminPosts = () => {
+    setPostsLoading(true)
+    fetch("/api/testimonial-posts", { cache: "no-store", credentials: "include" })
+      .then(r => r.json())
+      .then(j => { if (j.ok) setAdminPosts(j.posts || []); setPostsLoading(false) })
+      .catch(() => setPostsLoading(false))
+  }
+  useEffect(() => {
+    if (activeSection !== "reviews") return
+    loadAdminPosts()
+  }, [activeSection])
+  const uploadPost = async () => {
+    if (!postFile) { setPostMsg("Please select an image first"); return }
+    setPostUploading(true); setPostMsg("")
+    try {
+      const fd = new FormData()
+      fd.append("file", postFile)
+      if (postName.trim()) fd.append("name", postName.trim())
+      if (postCountry.trim()) fd.append("country", postCountry.trim())
+      const res = await fetch("/api/testimonial-posts", { method: "POST", body: fd })
+      const j = await res.json()
+      if (j.ok) {
+        setPostMsg("✅ Uploaded! Homepage e sobar age dekhabe.")
+        setPostFile(null); setPostName(""); setPostCountry("")
+        const input = document.getElementById("post-file-input") as HTMLInputElement | null
+        if (input) input.value = ""
+        loadAdminPosts()
+      } else {
+        setPostMsg("❌ " + (j.error || "Upload failed"))
+      }
+    } catch {
+      setPostMsg("❌ Upload failed")
+    } finally { setPostUploading(false) }
+  }
+  const deletePost = async (id: number) => {
+    try {
+      const r = await fetch(`/api/testimonial-posts?id=${id}`, { method: "DELETE", credentials: "include" })
+      if (r.ok) setAdminPosts((prev: any[]) => prev.filter((p: any) => p.id !== id))
+    } catch {}
+  }
   const markMsgRead = async (id: number, is_read: boolean) => {
     try {
       const r = await fetch("/api/contact", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, is_read }) })
@@ -269,6 +318,7 @@ export default function AdminDashboard() {
     { id: "videos" as const, label: "Videos", icon: "🎬" },
     { id: "content" as const, label: t("content"), icon: "📝" },
     { id: "messages" as const, label: `Messages${unreadCount ? " (" + unreadCount + ")" : ""}`, icon: "💬" },
+    { id: "reviews" as const, label: `Reviews${adminPosts.length ? " (" + adminPosts.length + ")" : ""}`, icon: "📸" },
     { id: "settings" as const, label: t("settings"), icon: "⚙️" },
   ]
   const handlePostSignal = async () => {
@@ -695,6 +745,63 @@ export default function AdminDashboard() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* REVIEWS — admin screenshot posts */}
+            {activeSection === "reviews" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Review Screenshots</h3>
+                  <button onClick={loadAdminPosts} className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${isDark?"bg-dark-800 border-dark-600 text-gray-300 hover:bg-dark-700":"bg-white border-gray-200 text-gray-600 hover:bg-gray-50"}`}>🔄 Refresh</button>
+                </div>
+
+                {/* Upload form */}
+                <div className={`${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"} border rounded-2xl p-6`}>
+                  <h4 className={`font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>📤 Upload New Review Screenshot</h4>
+                  <div className="grid md:grid-cols-3 gap-3 mb-3">
+                    <input id="post-file-input" type="file" accept="image/*" onChange={(e) => setPostFile(e.target.files?.[0] || null)} className={`text-sm rounded-xl border p-2 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-600 file:text-white ${isDark ? "bg-dark-700 border-dark-600 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-700"}`} />
+                    <input type="text" placeholder="Name (optional)" value={postName} onChange={(e) => setPostName(e.target.value)} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                    <input type="text" placeholder="Country (optional)" value={postCountry} onChange={(e) => setPostCountry(e.target.value)} className={`px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button onClick={uploadPost} disabled={postUploading} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50">
+                      {postUploading ? "Uploading..." : "Upload"}
+                    </button>
+                    {postMsg && <span className={`text-sm font-semibold ${postMsg.startsWith("✅") ? "text-green-500" : "text-red-500"}`}>{postMsg}</span>}
+                  </div>
+                  <p className={`text-xs mt-3 ${isDark ? "text-gray-500" : "text-gray-400"}`}>Screenshot (png/jpg/webp, max 10MB) upload korle homepage er testimonial section e SOBAR AGE dekhabe. Age field e naam/country dile card e dekhabe.</p>
+
+                  {/* Pending preview */}
+                  {postFile && (
+                    <div className="mt-4">
+                      <div className={`text-xs font-semibold mb-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>Preview:</div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={URL.createObjectURL(postFile)} alt="preview" className="max-h-48 rounded-lg border border-gray-200 dark:border-dark-600" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Posts list */}
+                {postsLoading ? <div className={`text-sm ${isDark?"text-gray-400":"text-gray-500"}`}>Loading...</div> : adminPosts.length===0 ? <div className={`text-sm border rounded-xl p-6 text-center ${isDark?"text-gray-400 bg-dark-800 border-dark-700":"text-gray-500 bg-white border-gray-100"}`}>No screenshots uploaded yet.</div> : (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {adminPosts.map((p: any) => (
+                      <div key={p.id} className={`rounded-2xl border overflow-hidden ${isDark?"bg-dark-800 border-dark-700":"bg-white border-gray-100"}`}>
+                        <a href={p.image_url} target="_blank" rel="noopener noreferrer">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={p.image_url} alt={`Review ${p.id}`} className="w-full h-40 object-cover" loading="lazy" />
+                        </a>
+                        <div className="p-4">
+                          <div className={`font-bold text-sm ${isDark?"text-white":"text-gray-900"}`}>{p.name || "Verified Trader"}</div>
+                          <div className={`text-xs mb-3 ${isDark?"text-gray-500":"text-gray-400"}`}>{p.country || "—"}</div>
+                          <button onClick={()=>deletePost(p.id)} className="text-xs font-bold px-3 py-1.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50">🗑 Delete</button>
+                        </div>
+                        <div className={`px-4 pb-4 text-[10px] ${isDark?"text-gray-600":"text-gray-400"}`}>{new Date(p.created_at).toLocaleString()}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className={`text-xs ${isDark?"text-gray-600":"text-gray-400"}`}>Note: upload Vercel Blob e save hoy — BLOB_READ_WRITE_TOKEN set thakte hobe (video upload er moto).</div>
               </div>
             )}
 
