@@ -142,7 +142,7 @@ export { getUserByToken, getUserFromRequest, revokeRequestTokens, COOKIE_NAME };
 
 export async function POST(req: Request) {
   try {
-    const { action, firstName, lastName, email, password, country } = await req.json();
+    const { action, firstName, lastName, email, password, country, idToken: idTokenRaw } = await req.json();
 
     const emailNorm = email ? String(email).trim().toLowerCase() : "";
 
@@ -168,36 +168,58 @@ export async function POST(req: Request) {
     }
 
     // ===== GOOGLE LOGIN (Gmail) - save to DB =====
+    // SECURITY: client theke sudhu Firebase ID TOKEN nei — email kokhono trust kora hoy na.
+    // Token ta Firebase Identity Toolkit REST API diye server-side verify hoy.
+    // Age email client theke ashoto — keu je email pathale oi account e dhukto (hole!).
     if (action === "google") {
-      if (!emailNorm || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
-        return NextResponse.json({ ok: false, error: "Invalid Google email" }, { status: 400 });
+      const idToken = typeof idTokenRaw === "string" ? idTokenRaw.trim() : "";
+      if (!idToken) {
+        return NextResponse.json({ ok: false, error: "Missing Google ID token" }, { status: 400 });
       }
+      const fbKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCw1RWTG-1akJQb7dZ_eKZ-7c_xIzyT6uU";
+      let account: any = null;
+      try {
+        const verifyRes = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${fbKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken }),
+        });
+        const vData = await verifyRes.json();
+        account = vData?.users?.[0] || null;
+      } catch {}
+      if (!account || !account.email) {
+        return NextResponse.json({ ok: false, error: "Invalid or expired Google token" }, { status: 401 });
+      }
+      const gEmail = String(account.email).trim().toLowerCase();
+      const gName = String(account.displayName || "").trim();
+      const gParts = gName.split(" ");
+      const gFirst = gParts[0] || gEmail.split("@")[0];
+      const gLast = gParts.slice(1).join(" ") || "";
+
       // Find existing or create new Google user
-      let userRes = await pool.query(`SELECT * FROM users WHERE email = $1`, [emailNorm]);
+      let userRes = await pool.query(`SELECT * FROM users WHERE email = $1`, [gEmail]);
       let user = userRes.rows[0] as DbUser | undefined;
       if (user) {
         if (user.status === "Suspended") {
           return NextResponse.json({ ok: false, error: "Your account has been suspended. Contact support." }, { status: 403 });
         }
-        if (ADMIN_EMAILS.includes(emailNorm) && user.role !== "admin") {
+        if (ADMIN_EMAILS.includes(gEmail) && user.role !== "admin") {
           await pool.query(`UPDATE users SET role = 'admin' WHERE id = $1`, [user.id]);
           user.role = "admin";
         }
         await pool.query(`UPDATE users SET last_login = NOW() WHERE id = $1`, [user.id]);
         // Update name if missing
-        if ((!user.first_name || user.first_name === "User") && firstName) {
-          await pool.query(`UPDATE users SET first_name = $1, last_name = $2 WHERE id = $3`, [String(firstName).trim(), String(lastName||"").trim(), user.id]);
-          user.first_name = String(firstName).trim();
-          user.last_name = String(lastName||"").trim();
+        if ((!user.first_name || user.first_name === "User") && gName) {
+          await pool.query(`UPDATE users SET first_name = $1, last_name = $2 WHERE id = $3`, [gFirst, gLast, user.id]);
+          user.first_name = gFirst;
+          user.last_name = gLast;
         }
       } else {
-        const role = ADMIN_EMAILS.includes(emailNorm) ? "admin" : "user";
+        const role = ADMIN_EMAILS.includes(gEmail) ? "admin" : "user";
         const dummyHash = await bcrypt.hash(crypto.randomBytes(16).toString("hex"), 10);
-        const fn = String(firstName||"").trim() || emailNorm.split("@")[0];
-        const ln = String(lastName||"").trim();
         const ins = await pool.query(
           `INSERT INTO users (first_name, last_name, email, password_hash, role) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-          [fn, ln, emailNorm, dummyHash, role]
+          [gFirst, gLast, gEmail, dummyHash, role]
         );
         user = ins.rows[0] as DbUser;
       }

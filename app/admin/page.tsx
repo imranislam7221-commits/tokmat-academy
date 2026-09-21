@@ -18,7 +18,7 @@ export default function AdminDashboard() {
   const { theme } = useTheme()
   const isDark = theme === "dark"
   const [locale, setLocale] = useState<Locale>("en")
-  const [activeSection, setActiveSection] = useState<"overview" | "users" | "signals" | "videos" | "content" | "settings">("overview")
+  const [activeSection, setActiveSection] = useState<"overview" | "users" | "signals" | "videos" | "content" | "messages" | "settings">("overview")
   const [showNewSignal, setShowNewSignal] = useState(false)
   const [newSignal, setNewSignal] = useState({ pair: "", direction: "BUY", entry: "", tp: "", sl: "" })
   const [mounted, setMounted] = useState(false)
@@ -227,6 +227,34 @@ export default function AdminDashboard() {
 
   const totalUsers = dbUsers.length;
   const premiumUsers = dbUsers.filter((u:any)=> (u.plan||"").toLowerCase().includes("premium") || (u.plan||"").toLowerCase().includes("supreme")).length;
+
+  // ===== Contact Messages (admin inbox) =====
+  const [contactMsgs, setContactMsgs] = useState<any[]>([])
+  const [msgsLoading, setMsgsLoading] = useState(false)
+  const loadContactMsgs = () => {
+    setMsgsLoading(true)
+    fetch("/api/contact", { cache: "no-store", credentials: "include" })
+      .then(r => r.json())
+      .then(j => { if (j.ok) setContactMsgs(j.messages || []); setMsgsLoading(false) })
+      .catch(() => setMsgsLoading(false))
+  }
+  useEffect(() => {
+    if (activeSection !== "messages") return
+    loadContactMsgs()
+  }, [activeSection])
+  const unreadCount = contactMsgs.filter((m: any) => !m.is_read).length
+  const markMsgRead = async (id: number, is_read: boolean) => {
+    try {
+      const r = await fetch("/api/contact", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, is_read }) })
+      if (r.ok) setContactMsgs((prev: any[]) => prev.map((m: any) => m.id === id ? { ...m, is_read } : m))
+    } catch {}
+  }
+  const deleteMsg = async (id: number) => {
+    try {
+      const r = await fetch(`/api/contact?id=${id}`, { method: "DELETE", credentials: "include" })
+      if (r.ok) setContactMsgs((prev: any[]) => prev.filter((m: any) => m.id !== id))
+    } catch {}
+  }
   const activeSignals = liveSignals.length;
   const premiumPct = totalUsers ? Math.round((premiumUsers/totalUsers)*100) : 0;
 
@@ -240,6 +268,7 @@ export default function AdminDashboard() {
     { id: "signals" as const, label: t("signals"), icon: "📡" },
     { id: "videos" as const, label: "Videos", icon: "🎬" },
     { id: "content" as const, label: t("content"), icon: "📝" },
+    { id: "messages" as const, label: `Messages${unreadCount ? " (" + unreadCount + ")" : ""}`, icon: "💬" },
     { id: "settings" as const, label: t("settings"), icon: "⚙️" },
   ]
   const handlePostSignal = async () => {
@@ -629,6 +658,41 @@ export default function AdminDashboard() {
                         </tbody>
                       </table>
                     </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* MESSAGES — contact form inbox */}
+            {activeSection === "messages" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Contact Messages</h3>
+                  <button onClick={loadContactMsgs} className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${isDark?"bg-dark-800 border-dark-600 text-gray-300 hover:bg-dark-700":"bg-white border-gray-200 text-gray-600 hover:bg-gray-50"}`}>🔄 Refresh</button>
+                </div>
+                {msgsLoading ? <div className={`text-sm ${isDark?"text-gray-400":"text-gray-500"}`}>Loading...</div> : contactMsgs.length===0 ? <div className={`text-sm border rounded-xl p-6 text-center ${isDark?"text-gray-400 bg-dark-800 border-dark-700":"text-gray-500 bg-white border-gray-100"}`}>No messages yet. Contact form theke message ashle ekhane dekhabe.</div> : (
+                  <div className="space-y-3">
+                    {contactMsgs.map((m: any) => (
+                      <div key={m.id} className={`rounded-2xl border p-4 ${m.is_read ? (isDark?"bg-dark-800 border-dark-700":"bg-white border-gray-100") : (isDark?"bg-blue-500/5 border-blue-500/30":"bg-blue-50 border-blue-200")}`}>
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div>
+                            <div className={`font-bold text-sm ${isDark?"text-white":"text-gray-900"}`}>
+                              {m.name} {!m.is_read && <span className="ml-1 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">NEW</span>}
+                            </div>
+                            <a href={`mailto:${m.email}`} className="text-xs text-blue-500 hover:underline">{m.email}</a>
+                          </div>
+                          <div className="text-xs text-gray-500 whitespace-nowrap">{new Date(m.created_at).toLocaleString()}</div>
+                        </div>
+                        <p className={`text-sm whitespace-pre-wrap ${isDark?"text-gray-300":"text-gray-700"}`}>{m.message}</p>
+                        <div className="flex gap-2 mt-3">
+                          <button onClick={()=>markMsgRead(m.id, !m.is_read)} className={`text-xs font-bold px-3 py-1.5 rounded-lg ${m.is_read ? (isDark?"bg-dark-700 text-gray-300 hover:bg-dark-600":"bg-gray-100 text-gray-600 hover:bg-gray-200") : "bg-blue-600 text-white hover:bg-blue-700"}`}>
+                            {m.is_read ? "Mark Unread" : "✓ Mark Read"}
+                          </button>
+                          <a href={`mailto:${m.email}`} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700">↩ Reply</a>
+                          <button onClick={()=>deleteMsg(m.id)} className="text-xs font-bold px-3 py-1.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50">🗑 Delete</button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

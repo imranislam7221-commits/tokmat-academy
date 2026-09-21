@@ -56,6 +56,24 @@ export default function DashboardPage() {
       })
       .catch(() => { window.location.href = "/login"; })
   }, [])
+
+  // REAL platform stats — /api/testimonials theke (same source as homepage hero stats)
+  // Fake "+12.5%" hardcode bad — win rate, total trades, active signals sob DB theke
+  useEffect(() => {
+    fetch("/api/testimonials")
+      .then(r => r.json())
+      .then(j => {
+        if (j.ok && j.stats) {
+          setUserData((p: typeof defaultUserData) => ({
+            ...p,
+            winRate: j.stats.winRate != null ? Math.round(j.stats.winRate) : 0,
+            totalTrades: j.stats.resolved || 0,
+            activeSignals: j.stats.signals ? Math.max(0, j.stats.signals - j.stats.resolved) : 0,
+          }))
+        }
+      })
+      .catch(() => {})
+  }, [])
   useEffect(() => {
     setMounted(true)
     setLocale(localeFromURL() as Locale)
@@ -102,10 +120,10 @@ export default function DashboardPage() {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
-            { label: t("totalBalance"), value: `$${userData.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}`, icon: "💰", change: "+12.5%", changeColor: "text-green-500", bgColor: isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100" },
-            { label: t("totalProfit"), value: `+$${userData.totalProfit.toLocaleString("en-US", { minimumFractionDigits: 2 })}`, icon: "📈", change: "+8.2%", changeColor: "text-green-500", bgColor: isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100" },
-            { label: t("winRate"), value: `${userData.winRate}%`, icon: "🎯", change: "+3%", changeColor: "text-green-500", bgColor: isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100" },
-            { label: t("totalTrades"), value: userData.totalTrades.toString(), icon: "📊", change: `+${userData.activeSignals} active`, changeColor: "text-blue-500", bgColor: isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100" },
+            { label: t("totalBalance"), value: `$${userData.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}`, icon: "💰", change: "—", changeColor: "text-gray-400", bgColor: isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100" },
+            { label: t("totalProfit"), value: `+$${userData.totalProfit.toLocaleString("en-US", { minimumFractionDigits: 2 })}`, icon: "📈", change: "—", changeColor: "text-gray-400", bgColor: isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100" },
+            { label: t("winRate"), value: `${userData.winRate}%`, icon: "🎯", change: userData.winRate > 0 ? "live" : "—", changeColor: userData.winRate > 0 ? "text-green-500" : "text-gray-400", bgColor: isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100" },
+            { label: t("totalTrades"), value: userData.totalTrades.toString(), icon: "📊", change: `${userData.activeSignals} running`, changeColor: "text-blue-500", bgColor: isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100" },
           ].map((stat, i) => (
             <div key={i} className={`${stat.bgColor} border rounded-2xl p-5 transition-all hover:shadow-lg ${isDark ? "" : ""}`}>
               <div className="flex items-center justify-between mb-3">

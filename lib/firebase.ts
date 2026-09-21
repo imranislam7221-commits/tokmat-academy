@@ -1,4 +1,3 @@
-// @ts-nocheck - firebase types resolve at runtime; build fix pending full reinstall
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 

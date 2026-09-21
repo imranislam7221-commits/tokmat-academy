@@ -51,6 +51,8 @@ export function initDb(): Promise<void> {
       await pool.query(`
         CREATE INDEX IF NOT EXISTS idx_sessions_expiry ON sessions(expires_at)
       `);
+      // Cleanup: expired sessions delete (>7 din purano) — DB clean rakhe
+      await pool.query(`DELETE FROM sessions WHERE expires_at < NOW()`);
     })().catch((e) => {
       initPromise = null; // allow retry on next request
       throw e;

@@ -73,18 +73,15 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     setErrorMsg("");
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
+    try {      const result = await signInWithPopup(auth, googleProvider);
       const gUser = result.user;
-      const emailVal = gUser.email || "";
-      const displayName = gUser.displayName || "";
-      const parts = displayName.split(" ");
-      const fn = parts[0] || emailVal.split("@")[0];
-      const ln = parts.slice(1).join(" ") || "";
+      // SECURITY: server sudhu verified Firebase ID token nei — email client-side trust kora hoy na.
+      const idToken = await gUser.getIdToken();
       const res = await fetch("/api/auth", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "google", email: emailVal, firstName: fn, lastName: ln }),
+        body: JSON.stringify({ action: "google", idToken }),
       });
       const data = await res.json();
       if (res.ok && data.ok) {

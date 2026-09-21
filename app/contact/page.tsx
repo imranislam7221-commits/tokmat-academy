@@ -14,6 +14,39 @@ export default function ContactPage() {
   const t = (key: string) => translate(locale, key)
   const { telegramLink, supportEmail } = useSiteSettings()
 
+  // Contact form state — DB te save hoy, admin panel e dekha jay
+  const [form, setForm] = useState({ name: "", email: "", message: "" })
+  const [sending, setSending] = useState(false)
+  const [sentMsg, setSentMsg] = useState("")
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSentMsg("")
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
+      setSentMsg("error|Please fill all fields")
+      return
+    }
+    setSending(true)
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      })
+      const j = await res.json()
+      if (j.ok) {
+        setSentMsg("ok|Message sent! We'll reply within 1 hour.")
+        setForm({ name: "", email: "", message: "" })
+      } else {
+        setSentMsg("error|" + (j.error || "Failed to send"))
+      }
+    } catch {
+      setSentMsg("error|Server error. Try Telegram instead.")
+    } finally {
+      setSending(false)
+    }
+  }
+
   return (
     <main className={`min-h-screen transition-colors duration-300 ${isDark ? "bg-dark-950" : "bg-gray-50"}`}>
       <section className="bg-gradient-to-br from-dark-950 via-dark-900 to-blue-950 text-white py-14 px-4">
@@ -54,11 +87,18 @@ export default function ContactPage() {
           </div>
           <div className={`rounded-xl p-6 border ${isDark ? "bg-dark-800 border-dark-700" : "bg-white border-gray-100"}`}>
             <h3 className={`font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>{t("sendMessage")}</h3>
-            <form className="space-y-4">
-              <input type="text" placeholder={t("yourName")} className={`w-full px-4 py-3 rounded-lg border outline-none transition-all text-sm ${isDark ? "bg-dark-700 border-dark-600 text-white placeholder-gray-500" : "border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"}`} />
-              <input type="email" placeholder={t("yourEmail")} className={`w-full px-4 py-3 rounded-lg border outline-none transition-all text-sm ${isDark ? "bg-dark-700 border-dark-600 text-white placeholder-gray-500" : "border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"}`} />
-              <textarea placeholder={t("yourMessage")} rows={4} className={`w-full px-4 py-3 rounded-lg border outline-none transition-all text-sm resize-none ${isDark ? "bg-dark-700 border-dark-600 text-white placeholder-gray-500" : "border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"}`}></textarea>
-              <button type="button" className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-colors">{t("sendMsgBtn")}</button>
+            <form onSubmit={handleSend} className="space-y-4">
+              <input type="text" placeholder={t("yourName")} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={`w-full px-4 py-3 rounded-lg border outline-none transition-all text-sm ${isDark ? "bg-dark-700 border-dark-600 text-white placeholder-gray-500" : "border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"}`} />
+              <input type="email" placeholder={t("yourEmail")} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={`w-full px-4 py-3 rounded-lg border outline-none transition-all text-sm ${isDark ? "bg-dark-700 border-dark-600 text-white placeholder-gray-500" : "border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"}`} />
+              <textarea placeholder={t("yourMessage")} rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className={`w-full px-4 py-3 rounded-lg border outline-none transition-all text-sm resize-none ${isDark ? "bg-dark-700 border-dark-600 text-white placeholder-gray-500" : "border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"}`}></textarea>
+              {sentMsg && (
+                <div className={`text-sm font-semibold px-3 py-2 rounded-lg ${sentMsg.startsWith("ok") ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"} ${isDark ? (sentMsg.startsWith("ok") ? "!bg-green-500/10" : "!bg-red-500/10") : ""}`}>
+                  {sentMsg.split("|")[1]}
+                </div>
+              )}
+              <button type="submit" disabled={sending} className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+                {sending ? "Sending..." : t("sendMsgBtn")}
+              </button>
             </form>
           </div>
         </div>
