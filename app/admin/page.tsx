@@ -18,7 +18,7 @@ export default function AdminDashboard() {
   const { theme } = useTheme()
   const isDark = theme === "dark"
   const [locale, setLocale] = useState<Locale>("en")
-  const [activeSection, setActiveSection] = useState<"overview" | "users" | "signals" | "videos" | "content" | "messages" | "reviews" | "settings">("overview")
+  const [activeSection, setActiveSection] = useState<"overview" | "users" | "signals" | "videos" | "content" | "messages" | "reviews" | "chats" | "settings">("overview")
   const [showNewSignal, setShowNewSignal] = useState(false)
   const [newSignal, setNewSignal] = useState({ pair: "", direction: "BUY", entry: "", tp: "", sl: "" })
   const [mounted, setMounted] = useState(false)
@@ -304,6 +304,82 @@ export default function AdminDashboard() {
       if (r.ok) setContactMsgs((prev: any[]) => prev.filter((m: any) => m.id !== id))
     } catch {}
   }
+  // ===== Live Chat (website chat threads — user + guest) =====
+  const [chatThreads, setChatThreads] = useState<any[]>([])
+  const [chatThreadsLoading, setChatThreadsLoading] = useState(false)
+  const [activeChat, setActiveChat] = useState<any>(null)
+  const [chatMsgs, setChatMsgs] = useState<any[]>([])
+  const [chatMsgsLoading, setChatMsgsLoading] = useState(false)
+  const [chatReply, setChatReply] = useState("")
+  const [chatSending, setChatSending] = useState(false)
+
+  const loadChatThreads = () => {
+    setChatThreadsLoading(true)
+    fetch("/api/chat?threads=1", { cache: "no-store", credentials: "include" })
+      .then(r => r.json())
+      .then(j => { if (j.ok) setChatThreads(j.threads || []); setChatThreadsLoading(false) })
+      .catch(() => setChatThreadsLoading(false))
+  }
+  const loadChatMsgs = (t: any) => {
+    if (!t) return
+    const p = new URLSearchParams()
+    p.set("admin", "1")
+    if (t.userId) p.set("userId", String(t.userId))
+    else p.set("guestId", t.guestId || "")
+    fetch(`/api/chat?${p}`, { cache: "no-store", credentials: "include" })
+      .then(r => r.json())
+      .then(j => { if (j.ok) setChatMsgs(j.messages || []) })
+      .catch(() => {})
+  }
+  // Mount e ekbar + 20s e refresh (sidebar badge notun message dekhate)
+  useEffect(() => {
+    loadChatThreads()
+    const iv = setInterval(loadChatThreads, 20000)
+    return () => clearInterval(iv)
+  }, [])
+  // Section open e thread list + open thread er messages auto refresh
+  useEffect(() => {
+    if (activeSection !== "chats") return
+    loadChatThreads()
+    const iv = setInterval(() => {
+      loadChatThreads()
+      if (activeChat) loadChatMsgs(activeChat)
+    }, 6000)
+    return () => clearInterval(iv)
+  }, [activeSection, activeChat])
+  const chatUnread = chatThreads.reduce((s: number, t: any) => s + (Number(t.adminUnread) || 0), 0)
+  const openChat = (t: any) => { setActiveChat(t); loadChatMsgs(t); setChatReply("") }
+  const sendChatReply = async () => {
+    const message = chatReply.trim()
+    if (!message || !activeChat || chatSending) return
+    setChatSending(true)
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          adminReply: true,
+          userId: activeChat.userId || undefined,
+          guestId: activeChat.userId ? undefined : activeChat.guestId,
+          message,
+        }),
+      })
+      const j = await res.json()
+      if (j.ok) { setChatReply(""); loadChatMsgs(activeChat); loadChatThreads() }
+    } catch {} finally { setChatSending(false) }
+  }
+  const deleteChatThread = async () => {
+    if (!activeChat) return
+    try {
+      const p = new URLSearchParams()
+      if (activeChat.userId) p.set("userId", String(activeChat.userId))
+      else p.set("guestId", activeChat.guestId || "")
+      const r = await fetch(`/api/chat?${p}`, { method: "DELETE", credentials: "include" })
+      if (r.ok) { setActiveChat(null); setChatMsgs([]); loadChatThreads() }
+    } catch {}
+  }
+
   const activeSignals = liveSignals.length;
   const premiumPct = totalUsers ? Math.round((premiumUsers/totalUsers)*100) : 0;
 
@@ -319,6 +395,7 @@ export default function AdminDashboard() {
     { id: "content" as const, label: t("content"), icon: "📝" },
     { id: "messages" as const, label: `Messages${unreadCount ? " (" + unreadCount + ")" : ""}`, icon: "💬" },
     { id: "reviews" as const, label: `Reviews${adminPosts.length ? " (" + adminPosts.length + ")" : ""}`, icon: "📸" },
+    { id: "chats" as const, label: `Live Chat${chatUnread ? " (" + chatUnread + ")" : ""}`, icon: "🗨️" },
     { id: "settings" as const, label: t("settings"), icon: "⚙️" },
   ]
   const handlePostSignal = async () => {
@@ -802,6 +879,121 @@ export default function AdminDashboard() {
                   </div>
                 )}
                 <div className={`text-xs ${isDark?"text-gray-600":"text-gray-400"}`}>Note: upload Vercel Blob e save hoy — BLOB_READ_WRITE_TOKEN set thakte hobe (video upload er moto).</div>
+              </div>
+            )}
+
+            {/* LIVE CHAT — website chat threads (user + guest), admin direct reply */}
+            {activeSection === "chats" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>🗨️ Live Chat
+                    {chatUnread > 0 && <span className="ml-2 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full align-middle">{chatUnread} new</span>}
+                  </h3>
+                  <button onClick={loadChatThreads} className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${isDark?"bg-dark-800 border-dark-600 text-gray-300 hover:bg-dark-700":"bg-white border-gray-200 text-gray-600 hover:bg-gray-50"}`}>🔄 Refresh</button>
+                </div>
+
+                <div className="grid lg:grid-cols-[300px_1fr] gap-4">
+                  {/* Thread list */}
+                  <div className={`${activeChat ? "hidden lg:block" : "block"} space-y-2 lg:max-h-[65vh] lg:overflow-y-auto`}>
+                    {chatThreadsLoading && chatThreads.length === 0 ? (
+                      <div className={`text-sm p-4 ${isDark?"text-gray-400":"text-gray-500"}`}>Loading...</div>
+                    ) : chatThreads.length === 0 ? (
+                      <div className={`text-sm border rounded-xl p-6 text-center ${isDark?"text-gray-400 bg-dark-800 border-dark-700":"text-gray-500 bg-white border-gray-100"}`}>Kew chat e message dey nai. Website er Live Chat button theke user ra message korle ekhane dekhabe.</div>
+                    ) : (
+                      chatThreads.map((t: any) => (
+                        <button
+                          key={t.threadKey}
+                          onClick={() => openChat(t)}
+                          className={`w-full text-left rounded-xl border p-3 transition-colors ${
+                            activeChat?.threadKey === t.threadKey
+                              ? isDark ? "bg-blue-500/10 border-blue-500/40" : "bg-blue-50 border-blue-300"
+                              : t.adminUnread > 0
+                                ? isDark ? "bg-dark-800 border-red-500/40" : "bg-red-50 border-red-200"
+                                : isDark ? "bg-dark-800 border-dark-700 hover:border-dark-600" : "bg-white border-gray-100 hover:border-gray-200"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className={`font-bold text-sm truncate ${isDark?"text-white":"text-gray-900"}`}>
+                              {t.userId ? "👤 " : "🎮 "}{t.name}
+                            </div>
+                            {t.adminUnread > 0 && <span className="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">{t.adminUnread}</span>}
+                          </div>
+                          {t.email && <div className="text-[11px] text-blue-500 truncate">{t.email}</div>}
+                          <div className={`text-xs truncate mt-1 ${t.lastSender === "admin" ? "italic" : ""} ${isDark?"text-gray-400":"text-gray-500"}`}>
+                            {t.lastSender === "admin" ? "You: " : ""}{t.lastMessage}
+                          </div>
+                          <div className={`text-[10px] mt-1 ${isDark?"text-gray-600":"text-gray-400"}`}>{t.lastAt ? new Date(t.lastAt).toLocaleString() : ""}</div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Conversation */}
+                  <div className={`${activeChat ? "block" : "hidden lg:block"} rounded-2xl border flex flex-col ${isDark?"bg-dark-800 border-dark-700":"bg-white border-gray-100"}`}>
+                    {!activeChat ? (
+                      <div className="p-10 text-center text-sm text-gray-400">Chat select koro →</div>
+                    ) : (
+                      <>
+                        {/* Chat header */}
+                        <div className={`px-4 py-3 border-b flex items-center justify-between gap-3 ${isDark?"border-dark-700":"border-gray-100"}`}>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <button onClick={() => setActiveChat(null)} className={`lg:hidden text-lg font-bold px-1 ${isDark?"text-gray-400":"text-gray-500"}`}>←</button>
+                            <div className="min-w-0">
+                              <div className={`font-bold text-sm truncate ${isDark?"text-white":"text-gray-900"}`}>{activeChat.name}</div>
+                              <div className={`text-[11px] truncate ${isDark?"text-gray-500":"text-gray-400"}`}>
+                                {activeChat.email || (activeChat.userId ? "" : `Guest · ${activeChat.guestId?.slice(0, 8)}`)} · {activeChat.userId ? "Member" : "Guest"}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-500/10 px-2 py-1 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> LIVE</span>
+                            <button onClick={deleteChatThread} title="Delete thread" className="text-xs font-bold px-2.5 py-1.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50">🗑</button>
+                          </div>
+                        </div>
+
+                        {/* Messages */}
+                        <div className={`flex-1 overflow-y-auto px-4 py-3 space-y-2.5 max-h-[45vh] ${isDark?"bg-dark-900":"bg-gray-50"}`}>
+                          {chatMsgs.length === 0 ? (
+                            <div className={`text-xs text-center pt-6 ${isDark?"text-gray-500":"text-gray-400"}`}>No messages yet.</div>
+                          ) : chatMsgs.map((m: any) => (
+                            <div key={m.id} className={`flex ${m.sender_type === "admin" ? "justify-end" : "justify-start"}`}>
+                              <div className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
+                                m.sender_type === "admin"
+                                  ? "bg-blue-600 text-white rounded-br-md"
+                                  : isDark ? "bg-dark-800 text-gray-200 border border-dark-700 rounded-bl-md" : "bg-white text-gray-800 border border-gray-200 rounded-bl-md"
+                              }`}>
+                                {m.sender_type !== "admin" && <div className="text-[10px] font-bold text-blue-500 mb-0.5">{m.sender_name || activeChat.name}</div>}
+                                <span className="whitespace-pre-wrap break-words">{m.message}</span>
+                                <div className={`text-[10px] mt-1 text-right ${m.sender_type === "admin" ? "text-blue-100" : isDark?"text-gray-600":"text-gray-400"}`}>
+                                  {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Reply input */}
+                        <div className={`px-3 py-3 border-t flex items-center gap-2 ${isDark?"border-dark-700":"border-gray-100"}`}>
+                          <input
+                            value={chatReply}
+                            onChange={(e) => setChatReply(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); sendChatReply() } }}
+                            placeholder="Type reply..."
+                            maxLength={2000}
+                            className={`flex-1 text-sm px-4 py-2.5 rounded-full border outline-none focus:border-blue-500 ${isDark?"bg-dark-700 border-dark-600 text-white placeholder-gray-500":"bg-gray-50 border-gray-200 text-gray-900"}`}
+                          />
+                          <button
+                            onClick={sendChatReply}
+                            disabled={chatSending || !chatReply.trim()}
+                            className="bg-blue-600 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+                          >
+                            {chatSending ? "..." : "Send"}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
