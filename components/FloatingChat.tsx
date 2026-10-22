@@ -16,6 +16,15 @@ interface ChatMsg {
   created_at: string
 }
 
+// Telegram er asol logo (blue circle + white paper plane)
+function TelegramIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.26-1.91.178-.184 3.247-2.977 3.307-3.23.005-.02.01-.1-.036-.14-.046-.042-.115-.028-.164-.017-.07.016-1.19.756-3.36 2.22-.317.218-.6.323-.86.318-.29-.006-.85-.16-1.266-.294-.51-.165-.916-.252-.88-.53.02-.145.22-.294.6-.446 2.34-1.02 3.9-1.693 4.68-2.02 2.23-.93 2.73-1.09 3.03-1.09z" />
+    </svg>
+  )
+}
+
 function getGuestId(): string {
   try {
     const existing = localStorage.getItem("tokmat_guest_id")
@@ -171,7 +180,9 @@ export function FloatingChat() {
             onClick={() => setMenuOpen(false)}
             className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-sky-50 transition-colors border-t border-gray-100"
           >
-            <span className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-base">✈️</span>
+            <span className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-500">
+              <TelegramIcon className="w-5 h-5" />
+            </span>
             Telegram
             <svg className="w-3.5 h-3.5 ml-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -203,7 +214,7 @@ export function FloatingChat() {
                 title="Continue on Telegram"
                 className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
               >
-                ✈️
+                <TelegramIcon className="w-4 h-4" />
               </a>
               <button
                 onClick={() => { setPanelOpen(false); setMenuOpen(false) }}
@@ -267,9 +278,10 @@ export function FloatingChat() {
             href={tgLink}
             target="_blank"
             rel="noopener noreferrer"
-            className={`text-[11px] text-center py-1.5 font-semibold border-t ${isDark ? "text-sky-400 border-dark-700 bg-dark-900 hover:bg-dark-800" : "text-sky-600 border-gray-100 bg-gray-50 hover:bg-sky-50"}`}
+            className={`text-[11px] flex items-center justify-center gap-1.5 py-1.5 font-semibold border-t ${isDark ? "text-sky-400 border-dark-700 bg-dark-900 hover:bg-dark-800" : "text-sky-600 border-gray-100 bg-gray-50 hover:bg-sky-50"}`}
           >
-            ✈️ Prefer Telegram? Continue there instead →
+            <TelegramIcon className="w-3.5 h-3.5" />
+            Prefer Telegram? Continue there instead →
           </a>
 
           {/* Input */}
