@@ -20,6 +20,8 @@ const PUBLIC_KEYS = [
   "telegram_link",
   "chat_telegram_link",
   "max_free_signals",
+  "broker_link",
+  "broker_name",
 ];
 
 async function ensureTable() {
@@ -45,6 +47,9 @@ const DEFAULTS: Record<string, string> = {
   telegram_link: "https://t.me/TokmatSignal",
   chat_telegram_link: "https://t.me/tokmatgoldhuntar",
   max_free_signals: "3",
+  // Broker affiliate link — admin panel theke change hoy, sob CTA ei ek link use kore
+  broker_link: "https://exness.com",
+  broker_name: "Exness",
 };
 
 export async function GET() {

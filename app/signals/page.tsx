@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
 import { useSiteSettings } from "@/lib/useSiteSettings"
+import { BrokerCTA } from "@/components/BrokerCTA"
 
 const fallbackSignals = [
   { pair: "EUR/USD", dir: "BUY", entry: "1.0850", tp: "1.0920", sl: "1.0810", profit: "+0.64%", status: "TP Hit" },
@@ -85,8 +86,15 @@ export default function SignalsPage() {
                 <span className={`font-bold trading-price ${s.profit.startsWith("+") ? "text-green-500" : "text-red-500"}`}>{s.profit}</span>
                 <span className={`signal-badge border ${s.status === "TP Hit" ? (isDark ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-green-100 text-green-700 border-green-200") : (isDark ? "bg-blue-500/20 text-blue-400 border-blue-500/30" : "bg-blue-100 text-blue-700 border-blue-200")}`}>{s.status}</span>
               </div>
+              {/* Broker affiliate link — ei signal ta trade korar jonno */}
+              <BrokerCTA compact />
             </div>
           ))}
+        </div>
+
+        {/* Recommended broker banner — signal dekhar por best conversion point */}
+        <div className="mt-8">
+          <BrokerCTA />
         </div>
       </section>
     </main>

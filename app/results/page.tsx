@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
+import { BrokerCTA } from "@/components/BrokerCTA"
 
 const months = [
   { month: "July 2024", signals: 156, wins: 132, losses: 24, winRate: "84.6%", profit: "+12.4%" },
@@ -76,6 +77,11 @@ export default function ResultsPage() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Result dekhe action nite chaile — broker CTA */}
+        <div className="mt-8">
+          <BrokerCTA />
         </div>
       </section>
     </main>

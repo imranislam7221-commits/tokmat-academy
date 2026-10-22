@@ -60,7 +60,7 @@ export default function AdminDashboard() {
   const [uploadMsg, setUploadMsg] = useState("")
   // Limited Offer banner + site settings (site_settings table theke)
   const [offerSettings, setOfferSettings] = useState({ enabled: true, title: "", subtitle: "", deadline: "", ctaText: "" })
-  const [siteSettings, setSiteSettings] = useState({ site_name: "", support_email: "", telegram_link: "", chat_telegram_link: "", max_free_signals: "" })
+  const [siteSettings, setSiteSettings] = useState({ site_name: "", support_email: "", telegram_link: "", chat_telegram_link: "", max_free_signals: "", broker_link: "", broker_name: "" })
   const [offerSaving, setOfferSaving] = useState(false)
 
   useEffect(() => {
@@ -79,6 +79,8 @@ export default function AdminDashboard() {
           telegram_link: j.settings.telegram_link || "",
           chat_telegram_link: j.settings.chat_telegram_link || "",
           max_free_signals: j.settings.max_free_signals || "",
+          broker_link: j.settings.broker_link || "",
+          broker_name: j.settings.broker_name || "",
         })
       }
     }).catch(()=>{})
@@ -86,7 +88,7 @@ export default function AdminDashboard() {
 
   const saveSiteSettings = async () => {
     try {
-      const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ site_name: siteSettings.site_name, support_email: siteSettings.support_email, telegram_link: siteSettings.telegram_link, chat_telegram_link: siteSettings.chat_telegram_link, max_free_signals: siteSettings.max_free_signals }) })
+      const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ site_name: siteSettings.site_name, support_email: siteSettings.support_email, telegram_link: siteSettings.telegram_link, chat_telegram_link: siteSettings.chat_telegram_link, max_free_signals: siteSettings.max_free_signals, broker_link: siteSettings.broker_link, broker_name: siteSettings.broker_name }) })
       if (res.ok) {
         const el = document.createElement("div"); el.textContent = "Site settings saved!"; el.className = "fixed bottom-6 right-6 bg-green-600 text-white px-4 py-2 rounded-xl shadow-lg z-50 text-sm font-bold"; document.body.appendChild(el); setTimeout(()=>el.remove(), 2500)
       }
@@ -1141,6 +1143,14 @@ export default function AdminDashboard() {
                     <div>
                       <label className={`text-xs font-semibold mb-1 block ${isDark ? "text-gray-400" : "text-gray-500"}`}>{t("maxFreeSignals")}</label>
                       <input type="number" min="0" value={siteSettings.max_free_signals} onChange={(e) => setSiteSettings({ ...siteSettings, max_free_signals: e.target.value })} className={`w-full px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                    </div>
+                    <div>
+                      <label className={`text-xs font-semibold mb-1 block ${isDark ? "text-gray-400" : "text-gray-500"}`}>💼 Broker Affiliate Link</label>
+                      <input type="text" value={siteSettings.broker_link} onChange={(e) => setSiteSettings({ ...siteSettings, broker_link: e.target.value })} placeholder="https://...affiliate-link" className={`w-full px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white placeholder-gray-500" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
+                    </div>
+                    <div>
+                      <label className={`text-xs font-semibold mb-1 block ${isDark ? "text-gray-400" : "text-gray-500"}`}>💼 Broker Name</label>
+                      <input type="text" value={siteSettings.broker_name} onChange={(e) => setSiteSettings({ ...siteSettings, broker_name: e.target.value })} placeholder="Exness" className={`w-full px-3 py-2.5 rounded-xl text-sm border outline-none ${isDark ? "bg-dark-700 border-dark-600 text-white placeholder-gray-500" : "bg-gray-50 border-gray-200 text-gray-900"}`} />
                     </div>
                   </div>
                   <button onClick={saveSiteSettings} className="mt-4 bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors">{t("saveSettings")}</button>

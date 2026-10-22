@@ -24,7 +24,7 @@ const demoHistory: any[] = []
 
 export default function DashboardPage() {
   const { theme } = useTheme()
-  const { telegramLink } = useSiteSettings()
+  const { telegramLink, brokerLink, brokerName } = useSiteSettings()
   const isDark = theme === "dark"
   const [locale, setLocale] = useState<Locale>("en")
   const t = (key: string) => translate(locale, key)
@@ -195,6 +195,7 @@ export default function DashboardPage() {
                   <div className="space-y-2">
                     {[
                       { label: t("joinTelegram"), desc: t("getSignalsOnTelegram"), icon: "📱", href: telegramLink, color: "bg-blue-50 hover:bg-blue-100 text-blue-700" },
+                      ...(brokerLink ? [{ label: `Open ${brokerName || "Broker"} Account`, desc: "Low spread, fast withdrawal", icon: "💼", href: brokerLink, color: "bg-amber-50 hover:bg-amber-100 text-amber-700" }] : []),
                       { label: t("educationCenter"), desc: t("learnTradingStrategies"), icon: "📚", href: "/education", color: "bg-purple-50 hover:bg-purple-100 text-purple-700" },
                       { label: t("viewResultsDash"), desc: t("seeTrackRecord"), icon: "🏆", href: "/results", color: "bg-green-50 hover:bg-green-100 text-green-700" },
                     ].map((action, i) => (

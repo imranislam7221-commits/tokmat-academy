@@ -28,6 +28,8 @@ export function useSiteSettings() {
   const [siteName, setSiteName] = useState("Tokmat Academy")
   const [supportEmail, setSupportEmail] = useState("maasum1231@gmail.com")
   const [maxFreeSignals, setMaxFreeSignals] = useState(3)
+  const [brokerLink, setBrokerLink] = useState("https://exness.com")
+  const [brokerName, setBrokerName] = useState("Exness")
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
@@ -37,9 +39,11 @@ export function useSiteSettings() {
       if (s.site_name) setSiteName(s.site_name)
       if (s.support_email) setSupportEmail(s.support_email)
       if (s.max_free_signals) setMaxFreeSignals(Number(s.max_free_signals) || 3)
+      if (s.broker_link !== undefined) setBrokerLink(s.broker_link)
+      if (s.broker_name) setBrokerName(s.broker_name)
       setLoaded(true)
     })
   }, [])
 
-  return { telegramLink, chatTelegramLink, siteName, supportEmail, maxFreeSignals, loaded }
+  return { telegramLink, chatTelegramLink, siteName, supportEmail, maxFreeSignals, brokerLink, brokerName, loaded }
 }
