@@ -1,11 +1,32 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useTheme } from "@/components/ThemeProvider"
 import { t as translate, type Locale } from "@/lib/translations"
 import { logout as authLogout } from "@/lib/auth"
 
 const demoUsers: any[] = [] // real users DB theke ase — demo list removed
+
+// Notun chat message e beep — Web Audio diye (audio file lage na)
+function playChatBeep() {
+  try {
+    const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext
+    if (!Ctx) return
+    const ctx = new Ctx()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.type = "sine"
+    osc.frequency.value = 880
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02)
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.4)
+    setTimeout(() => { try { ctx.close() } catch {} }, 700)
+  } catch {}
+}
 
 const demoSignals = [
   { id: 1, pair: "EUR/USD", direction: "BUY", entry: "1.0850", tp: "1.0920", sl: "1.0810", posted: "2h ago" },
@@ -312,6 +333,10 @@ export default function AdminDashboard() {
   const [chatMsgsLoading, setChatMsgsLoading] = useState(false)
   const [chatReply, setChatReply] = useState("")
   const [chatSending, setChatSending] = useState(false)
+  // Notification (sound + desktop) — admin panel open thakle notun message e alert
+  const [chatNotifyOn, setChatNotifyOn] = useState(false)
+  const lastChatUnreadRef = useRef(0)
+  const chatNotifyInitRef = useRef(false)
 
   const loadChatThreads = () => {
     setChatThreadsLoading(true)
@@ -348,6 +373,58 @@ export default function AdminDashboard() {
     return () => clearInterval(iv)
   }, [activeSection, activeChat])
   const chatUnread = chatThreads.reduce((s: number, t: any) => s + (Number(t.adminUnread) || 0), 0)
+
+  // Saved preference load (page refresh er por o on thakbe)
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("tokmat_admin_chat_notify") === "1") setChatNotifyOn(true)
+    } catch {}
+  }, [])
+
+  // Unread barle beep + desktop notification (first load e chup thake)
+  useEffect(() => {
+    const prev = lastChatUnreadRef.current
+    if (!chatNotifyInitRef.current) {
+      chatNotifyInitRef.current = true
+      lastChatUnreadRef.current = chatUnread
+      return
+    }
+    if (chatUnread > prev && chatNotifyOn) {
+      playChatBeep()
+      try {
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          const t = chatThreads.find((x: any) => Number(x.adminUnread) > 0)
+          const n = new Notification("New chat message 💬", {
+            body: t ? `${t.name}: ${t.lastMessage}` : `${chatUnread - prev} new message(s)`,
+            icon: "/favicon.png",
+          })
+          n.onclick = () => {
+            window.focus()
+            setActiveSection("chats")
+            n.close()
+          }
+        }
+      } catch {}
+    }
+    lastChatUnreadRef.current = chatUnread
+  }, [chatUnread, chatNotifyOn, chatThreads])
+
+  const toggleChatNotify = async () => {
+    if (chatNotifyOn) {
+      setChatNotifyOn(false)
+      try { localStorage.setItem("tokmat_admin_chat_notify", "0") } catch {}
+      return
+    }
+    // Permission chai (sound permission chara o cholbe)
+    try {
+      if (typeof Notification !== "undefined" && Notification.permission === "default") {
+        await Notification.requestPermission()
+      }
+    } catch {}
+    setChatNotifyOn(true)
+    try { localStorage.setItem("tokmat_admin_chat_notify", "1") } catch {}
+    playChatBeep()
+  }
   const openChat = (t: any) => { setActiveChat(t); loadChatMsgs(t); setChatReply("") }
   const sendChatReply = async () => {
     const message = chatReply.trim()
@@ -889,7 +966,16 @@ export default function AdminDashboard() {
                   <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>🗨️ Live Chat
                     {chatUnread > 0 && <span className="ml-2 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full align-middle">{chatUnread} new</span>}
                   </h3>
-                  <button onClick={loadChatThreads} className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${isDark?"bg-dark-800 border-dark-600 text-gray-300 hover:bg-dark-700":"bg-white border-gray-200 text-gray-600 hover:bg-gray-50"}`}>🔄 Refresh</button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={toggleChatNotify}
+                      title={chatNotifyOn ? "New message e sound + notification on" : "Notification off — click to enable"}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${chatNotifyOn ? "bg-green-600 text-white border-green-600 hover:bg-green-700" : isDark ? "bg-dark-800 border-dark-600 text-gray-300 hover:bg-dark-700" : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+                    >
+                      {chatNotifyOn ? "🔔 On" : "🔕 Off"}
+                    </button>
+                    <button onClick={loadChatThreads} className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${isDark?"bg-dark-800 border-dark-600 text-gray-300 hover:bg-dark-700":"bg-white border-gray-200 text-gray-600 hover:bg-gray-50"}`}>🔄 Refresh</button>
+                  </div>
                 </div>
 
                 <div className="grid lg:grid-cols-[300px_1fr] gap-4">
