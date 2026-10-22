@@ -248,30 +248,18 @@ export async function POST(req: Request) {
       ? `${user.first_name || ""} ${user.last_name || ""}`.trim()
       : String(body.name || "").trim().slice(0, 60);
 
-    // Thread e age kono message ache kina — first message hole auto wait reply
-    const threadCond = user
-      ? `(user_id = $1 OR (guest_id = $2 AND user_id IS NULL))`
-      : `(guest_id = $1 AND user_id IS NULL)`;
-    const threadParams = user ? [user.id, guestId] : [guestId];
-    const before = await pool.query(
-      `SELECT COUNT(*)::int AS c FROM chat_messages WHERE ${threadCond}`,
-      threadParams
-    );
-    const isFirstMessage = (before.rows[0]?.c || 0) === 0;
-
     const res = await pool.query(
       `INSERT INTO chat_messages (sender_type, sender_name, user_id, guest_id, message)
        VALUES ('user', $1, $2, $3, $4) RETURNING id`,
       [senderName, user ? user.id : null, user ? "" : guestId, message]
     );
 
-    if (isFirstMessage) {
-      await pool.query(
-        `INSERT INTO chat_messages (sender_type, sender_name, user_id, guest_id, message)
-         VALUES ('admin', 'Support', $1, $2, $3)`,
-        [user ? user.id : null, user ? "" : guestId, AUTO_WAIT_REPLY]
-      );
-    }
+    // Prottek message e auto wait reply — user jeno kono din "reply ashe nai" na bhabe
+    await pool.query(
+      `INSERT INTO chat_messages (sender_type, sender_name, user_id, guest_id, message)
+       VALUES ('admin', 'Support', $1, $2, $3)`,
+      [user ? user.id : null, user ? "" : guestId, AUTO_WAIT_REPLY]
+    );
 
     return NextResponse.json({ ok: true, id: res.rows[0].id });
   } catch (e) {
